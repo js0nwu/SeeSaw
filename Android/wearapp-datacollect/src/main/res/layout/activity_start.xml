@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context="edu.gatech.ubicomp.buttons.StartActivity" android:padding="0dp">
+
+    <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start Session"
+            android:id="@+id/startButton"
+            android:onClick="startSession"
+            android:layout_alignParentBottom="true" android:layout_centerHorizontal="true"/>
+    <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/flashText"
+            android:hint="Flash Length"
+            android:textAlignment="center"
+            android:text="1000"
+            android:editable="false"
+            android:textSize="10dp" android:layout_alignBaseline="@+id/flashMoreButton"
+            android:layout_alignBottom="@+id/flashMoreButton" android:layout_alignStart="@+id/sessionText"
+            android:layout_alignEnd="@+id/sessionText"/>
+    <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/sessionText"
+            android:hint="Session Length"
+            android:text="40"
+            android:textAlignment="center"
+            android:editable="false"
+            android:textSize="10dp" android:layout_below="@+id/flashText" android:layout_centerHorizontal="true"/>
+    <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="F-"
+            android:id="@+id/flashLessButton"
+            android:onClick="flashLess" android:layout_alignParentTop="true" android:layout_alignParentStart="true"
+            android:padding="0dp"/>
+    <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="F+"
+            android:id="@+id/flashMoreButton"
+            android:onClick="flashMore"
+            android:padding="0dp" android:layout_alignTop="@+id/flashLessButton" android:layout_alignParentEnd="true"/>
+    <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="S-"
+            android:id="@+id/sessionLessButton"
+            android:onClick="sessionLess"
+            android:padding="0dp"
+            android:layout_alignBaseline="@+id/sessionText" android:layout_alignBottom="@+id/sessionText"
+            android:layout_alignStart="@+id/flashLessButton"/>
+    <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="S+"
+            android:id="@+id/sessionMoreButton"
+            android:onClick="sessionMore" android:nestedScrollingEnabled="false"
+            android:padding="0dp"
+            android:layout_alignTop="@+id/sessionLessButton" android:layout_alignStart="@+id/flashMoreButton"/>
+    <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/personText"
+            android:textAlignment="center" android:text="1"
+            android:textSize="10dp"
+            android:editable="false"
+            android:layout_below="@+id/sessionLessButton" android:layout_alignStart="@+id/sessionText"
+            android:layout_alignEnd="@+id/sessionText"/>
+    <Button style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="P-" android:id="@+id/personLessButton"
+            android:onClick="personLess"
+            android:padding="0dp"
+            android:layout_centerVertical="true" android:layout_alignStart="@+id/sessionLessButton"
+            android:nestedScrollingEnabled="false"/>
+    <Button style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="P+" android:id="@+id/personMoreButton"
+            android:onClick="personMore" android:padding="0dp"
+            android:layout_centerVertical="true" android:layout_alignStart="@+id/sessionMoreButton"/>
+    <EditText android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/experimentText"
+              android:textAlignment="center" android:text="1" android:textSize="10dp"
+              android:layout_below="@+id/personText" android:layout_alignEnd="@+id/personText"
+              android:editable="false"
+              android:layout_alignStart="@+id/personText"/>
+    <Button style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="E-" android:id="@+id/experimentLess"
+            android:onClick="experimentLess" android:padding="0dp"
+            android:layout_alignBaseline="@+id/experimentText" android:layout_alignBottom="@+id/experimentText"
+            android:layout_alignStart="@+id/personLessButton"/>
+    <Button style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="E+" android:id="@+id/experimentMore"
+            android:onClick="experimentMore" android:padding="0dp"
+            android:layout_alignBaseline="@+id/experimentText" android:layout_alignBottom="@+id/experimentText"
+            android:layout_alignStart="@+id/personMoreButton"/>
+</RelativeLayout>

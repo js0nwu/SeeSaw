@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">Wearapp Menu Demo</string>
+    <string name="hello_round">Hello Round World!</string>
+    <string name="hello_square">Hello Square World!</string>
+    <string name="long_para">
+        //Taken from Wikipedia https://en.wikipedia.org/wiki/Interval_scheduling
+
+        \n
+        \n
+        Interval scheduling is a class of problems in computer science, particularly in the area of algorithm design. The problems consider a set of tasks. Each task is represented by an interval describing the time in which it needs to be executed. For instance, task A might run from 2:00 to 5:00, task B might run from 4:00 to 10:00 and task C might run from 9:00 to 11:00. A subset of intervals is compatible if no two intervals overlap. For example, the subset {A,C} is compatible, as is the subset {B}; but neither {A,B} nor {B,C} are compatible subsets, because the corresponding intervals within each subset overlap.
+
+The interval scheduling maximization problem (ISMP) is to find a largest compatible set - a set of non-overlapping intervals of maximum size. The goal here is to execute as many tasks as possible.
+
+In an upgraded version of the problem, the intervals are partitioned into groups. A subset of intervals is compatible if no two intervals overlap, and moreover, no two intervals belong to the same group (i.e. the subset contains at most a single representative interval of each group).
+
+The group interval scheduling decision problem (GISDP) is to decide whether there exists a compatible set in which all groups are represented. The goal here is to execute a single representative task from each group. GISDPk is a restricted version of GISDP in which the number of intervals in each group is at most k.
+
+The group interval scheduling maximization problem (GISMP) is to find a largest compatible set - a set of non-overlapping representatives of maximum size. The goal here is to execute a representative task from as many groups as possible. GISMPk is a restricted version of GISMP in which the number of intervals in each group is at most k. This problem is often called JISPk, where J stands for Job.
+
+GISMP is the most general problem; the other two problems can be seen as special cases of it:
+
+ISMP is the special case in which each task belongs to its own group (i.e. it is equal to GISMP1).
+GISDP is the problem of deciding whether the maximum is exactly equal to the number of groups.
+\n
+The following greedy algorithm does find the optimal solution:
+
+Select the interval, x, with the earliest finishing time.
+Remove x, and all intervals intersecting x, from the set of candidate intervals.
+Continue until the set of candidate intervals is empty.
+Whenever we select an interval at step 1, we may have to remove many intervals in step 2. However, all these intervals necessarily cross the finishing time of x, and thus they all cross each other (see figure). Hence, at most 1 of these intervals can be in the optimal solution. Hence, for every interval in the optimal solution, there is an interval in the greedy solution. This proves that the greedy algorithm indeed finds an optimal solution.
+
+
+The greedy algorithm can be executed in time O(n log n), where n is the number of tasks, using a preprocessing step in which the tasks are sorted by their finishing times.
+
+
+    </string>
+</resources>

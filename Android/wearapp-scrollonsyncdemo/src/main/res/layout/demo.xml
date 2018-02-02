@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:weightSum="1"
+    android:id="@+id/screen2"
+    android:background="@color/white">
+
+
+    <edu.gatech.ubicomp.scroll.OrbitsView
+        android:id="@+id/orbits2"
+        android:layout_width="15dp"
+        android:layout_height="match_parent"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"></edu.gatech.ubicomp.scroll.OrbitsView>
+<ScrollView
+    android:layout_width="160dp"
+    android:layout_height="175dp"
+    android:layout_marginTop="5dp"
+    android:layout_marginLeft="5dp"
+    android:layout_marginBottom="6dp"
+    android:id="@+id/scrollview">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="@string/long_para"
+        android:id="@+id/textView"
+        android:textColor="@color/black"
+        android:layout_below="@+id/orbits2" />
+
+</ScrollView>
+</RelativeLayout>
+    

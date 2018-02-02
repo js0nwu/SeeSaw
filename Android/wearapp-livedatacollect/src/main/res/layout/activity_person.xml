@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="edu.gatech.ubicomp.synchro.livedatacollect.PersonActivity">
+<RelativeLayout
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/upperlayout"
+    android:orientation="horizontal">
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="P-"
+        android:id="@+id/personLess"
+        android:layout_alignParentStart="true"
+        android:onClick="personLess"/>
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/personText"
+        android:layout_centerHorizontal="true"
+        android:text="1"
+        android:editable="false"/>
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="P+"
+        android:id="@+id/personMore"
+        android:layout_alignParentEnd="true"
+        android:onClick="personMore"/>
+</RelativeLayout>
+<RelativeLayout
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/lowerlayout"
+    android:layout_below="@+id/upperlayout"
+    android:orientation="horizontal">
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="A-"
+        android:id="@+id/activityPrev"
+        android:layout_alignParentStart="true"
+        android:onClick="activityPrev"/>
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/activityText"
+        android:layout_centerHorizontal="true"
+        android:text="prep"
+        android:editable="false"/>
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="A+"
+        android:id="@+id/activityNext"
+        android:layout_alignParentEnd="true"
+        android:onClick="activityNext"/>
+</RelativeLayout>
+<Button
+    style="?android:attr/buttonStyleSmall"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Start Study"
+    android:id="@+id/startButton"
+    android:layout_alignParentBottom="true"
+    android:layout_alignParentStart="true"
+    android:onClick="startExperiment"/>
+</RelativeLayout>

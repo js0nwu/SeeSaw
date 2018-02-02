@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        tools:context="edu.gatech.ubicomp.buttons.PersonActivity">
+
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Person:"
+            android:id="@+id/personLabel" android:layout_alignParentTop="true" android:layout_centerHorizontal="true"/>
+    <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/personText" android:layout_below="@+id/personLabel" android:layout_centerHorizontal="true"
+            android:text="1" android:editable="false"/>
+    <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="S"
+            android:id="@+id/startButton"
+            android:layout_alignParentBottom="true" android:layout_alignParentStart="true"
+            android:onClick="startExperiment"/>
+    <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="M"
+            android:id="@+id/manualButton"
+            android:onClick="startManual" android:layout_alignTop="@+id/startButton"
+            android:layout_centerHorizontal="true"/>
+    <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="P-"
+            android:id="@+id/personLess"
+            android:layout_below="@+id/personLabel" android:layout_alignParentStart="true"
+            android:onClick="personLess"/>
+    <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="P+"
+            android:id="@+id/personMore"
+            android:layout_below="@+id/personLabel" android:layout_alignParentEnd="true" android:onClick="personMore"/>
+    <Button style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="C" android:id="@+id/continuousButton"
+            android:onClick="startContinuous"
+            android:layout_alignParentBottom="true" android:layout_alignParentEnd="true"/>
+</RelativeLayout>

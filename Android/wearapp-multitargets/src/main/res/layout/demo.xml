@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:id="@+id/screen2"
+    android:background="@color/white">
+
+    <edu.gatech.ubicomp.multitargets.OrbitsView
+        android:id="@+id/orbits2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"></edu.gatech.ubicomp.multitargets.OrbitsView>
+
+    <ImageView
+        android:src="@drawable/volume_low"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="15dp"
+        android:id="@+id/imageView3"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true" />
+
+    <ImageView
+        android:src="@drawable/play_pause"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_centerVertical="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="15dp"
+        android:id="@+id/imageView4" />
+
+    <ImageView
+        android:src="@drawable/volume_high"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:id="@+id/imageView2"
+        android:layout_above="@+id/imageView4"
+        android:layout_alignStart="@+id/imageView3"
+        android:layout_marginBottom="15dp" />
+
+    <ImageView
+        android:src="@drawable/next_song2"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:id="@+id/imageView6"
+        android:layout_alignTop="@+id/imageView4"
+        android:layout_toEndOf="@+id/textView2"
+        android:layout_marginStart="15dp" />
+
+    <TextView
+        android:text="Song"
+        android:layout_width="40dp"
+        android:layout_height="wrap_content"
+        android:textColor="@color/black"
+        android:id="@+id/textView2"
+        android:layout_centerVertical="true"
+        android:layout_alignStart="@+id/imageView2" />
+</RelativeLayout>

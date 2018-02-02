@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:weightSum="1"
+    android:id="@+id/screen2"
+    android:background="@color/white">
+
+
+    <edu.gatech.ubicomp.scroll.OrbitsView
+        android:id="@+id/orbits2"
+        android:layout_width="15dp"
+        android:layout_height="match_parent"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"></edu.gatech.ubicomp.scroll.OrbitsView>
+    <ListView
+            android:layout_width="160dp"
+            android:layout_height="190dp"
+            android:layout_marginTop="0dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginBottom="0dp"
+            android:background="@color/blue"
+            android:id="@+id/listView" android:visibility="visible">
+    </ListView>
+</RelativeLayout>
+    

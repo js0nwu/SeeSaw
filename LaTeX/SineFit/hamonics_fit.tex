@@ -1,0 +1,113 @@
+\documentclass[11pt,letterpaper]{article}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{makeidx}
+\usepackage{graphicx}
+\usepackage[left=1.00in, right=1.00in, top=1.00in, bottom=1.00in]{geometry}
+\usepackage{epstopdf}
+
+
+\include{command}
+
+\newcommand{\SNR}{\mathrm{SNR}}
+
+
+\author{Maxim Golsshtein}
+\title{Using a SNRFitting a finger motion with harmonics}
+\begin{document}
+	\maketitle
+	
+	\section{Theory}
+	
+	One of the methods to classify a signal as one that originates from a cyclic motion is to evaluate it's fit to a series of harmonics. In general, any periodic signal with a given frequency $\omega$ can be represented using the Fourier series. Given an infinitely-differentiable bounded function $x(t) = x(t+\frac{2\pi n}{\omega})$ for $t\in\Reals{}$ and $n\in\Integers{}$, there exists $N>0$ for which 
+	\begin{equation}\label{key}
+	x(t) = a_0 + \sum_{p=1}^{N} a_p \sin(\omega p t) + b_p \sin(2\pi f p t).
+	\end{equation}
+	where $a_0 \in \Reals{}$, $a_p \in \Reals{}$ and $b_p \in \Reals{}$ for $p \in [1, ..., N]$ are parameters of the Fourier series.
+	
+	Let $y(t)$ be a measurement of a periodic signal $x(t)$. The measurement includes noise, imperfections in the repetition on the signal, and other measurement artifacts, denoted as $n(t)$:
+	\begin{equation}\label{key}
+	y(t) = x(t) + n(t)
+	\end{equation}
+	We model $n(t)$ as a zero-mean random process, with a variance $\sigma_n^2$.
+	
+	A signal-to-noise ratio (SNR) is defined as a ratio between the power of the signal and the power of the noise. For periodic signals and zero mean uncorrelated random noise, this ratio is: 
+	\begin{equation}\label{key}
+		 \SNR \dfn \frac{\sigma_x^2}{\sigma_n^2}
+	\end{equation}
+	where 
+	\begin{equation}\label{key}
+		\sigma_x^2 = \half\sum_{p=1}^{N} a_p^2 + b_p^2.
+	\end{equation}
+		
+	For sufficiently large periodic motion, the SNR will be larger than a specified threshold, and can be used to classify the signal. 
+	
+	\section{Solution}
+	
+	In order to calculate the SNR, the measured signal must first to be divided into the signal and the noise parts. Suppose the signal have been measured for several periods periods: $y(t_i)$, $i=0,...,m$, where $i \in \brf{i: 0 \leq t_i < 1/f}$ are the indexes of the first period time samples, $i \in \brf{i: 1/f \leq t_i < 2/f}$ are of the second period, and so on.
+	We assume that signal contains a slow-changing bias $b(t_i)$, which is approximately constant during each period. This bias can be approximated by taking an average of the samples during each period, or by filtering the signal with a very-low-bandwidth low-pass filter.
+	In addition, the signal is assumed to contains $N$ significant harmonics, such that $2N < m$, and the measured noise/artifacts are uncorrelated at each sample.
+	
+	Let $A\in\Reals{m \times 2N}$ be the measurement matrix:
+	\begin{equation}
+	A = \bmat{ \sin(\omega t_0) & \cos(\omega t_0) & \sin(2 \omega t_0) & \cos(2 \omega t_0) & \cdots & \sin(N \omega t_0) & \cos(N \omega t_0) \\
+		\sin(\omega t_1) & \cos(\omega t_1) & \sin(2 \omega t_1) & \cos(2 \omega t_1) & \cdots & \sin(N \omega t_1) & \cos(N \omega t_1) \\
+		\vdots &  &  & \vdots &  &  & \vdots \\
+		\sin(\omega t_m) &  &  & \cdots &  & & \cos(N \omega t_m)
+		},
+	\end{equation}
+	and let $\phi \in \Reals{2 N}$ be a vector of the Fourier series parameters:
+	\begin{equation}
+		\phi = \bmat{a_1 & b_1 & a_2 & b_2 & \cdots & a_N & b_N}^{\TR}.
+	\end{equation}
+	%
+	The measurement set can be represented as:
+	\begin{equation}\label{eqMsrSetRepresentation}
+	\underbrace{\bmat{y(t_0) \\ \vdots \\ y(t_m)}}_{\dfn Y} - \underbrace{\bmat{b(t_0) \\ \vdots \\ b(t_m)}}_{\dfn B} = A \phi + \underbrace{\bmat{n(t_0) \\ \vdots \\ n(t_m)}}_{\dfn r}
+	\end{equation}
+	
+	The best fit of the parameters to the signal, that maximizes the SNR, is given by a least-squares solution of the equation~\eqref{eqMsrSetRepresentation}:
+	\begin{equation}\label{eqLSsolution}
+	\widehat{\phi} = \invb{A^{\TR} A} A^{\TR} (Y - B).
+	\end{equation}
+	The noise is estimated as the estimation residual:
+	\begin{equation}\label{key}
+	\widehat{r} = \br{\I - \invb{A^{\TR} A} A^{\TR}}(Y - B),
+	\end{equation}
+	and the SNR is estimated using the sample covariance:
+	\begin{equation}\label{key}
+	\widehat{\SNR} = \frac{m-1}{2} \frac{\Norm[2]{\phi}^2}{\Norm[2]{r}^2}
+	\end{equation}
+	
+	\section{Numerical Example}
+	Figures~\ref{figXaxisMagSignalWalkingSync} and~\ref{figXaxisMagSignalWalkingNoise}  exhibits two signals, measured by the $x$ axis of the smartwatch magnetometer. One signal was recorder while the user was trying to sync their magnetic ring-wearing finger motion with the (user presented) periodic ($\frac{2\pi}{omega} = 0.75s$) signal. The second set was recorded during the user's normal activity (walking). After 4 seconds from the start, the harmonic signal was extracted, using $N=2$ and 5 full periods. The figures show the signal and the fitted periodic wave. Using the estimated SNR, the finger-motion-induced signal can be clearly identified. 
+	
+	\begin{figure}[tbph]
+		\centering
+		\includegraphics[width=0.8\linewidth]{WalkSig}
+		\caption{Signal recorder while walking and syncing.}
+		\label{figXaxisMagSignalWalkingSync}
+	\end{figure}
+	\begin{figure}[tbph]
+		\centering
+		\includegraphics[width=0.8\linewidth]{WalkNoise}
+		\caption{Signal recorder while walking (random motion).}
+		\label{figXaxisMagSignalWalkingNoise}
+	\end{figure}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+\end{document}

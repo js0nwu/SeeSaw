@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:id="@+id/container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:context="edu.gatech.ubicomp.synchro.swipedatacollect.SwipeActivity"
+                tools:deviceIds="wear_round">
+
+    <edu.gatech.ubicomp.synchro.swipedatacollect.SwipeView
+        android:id="@+id/swipeview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"/>
+
+    <TextView
+        android:text="Swipe Right"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/outputText"
+        android:gravity="center"
+        android:textSize="14dp"/>
+
+</RelativeLayout>
