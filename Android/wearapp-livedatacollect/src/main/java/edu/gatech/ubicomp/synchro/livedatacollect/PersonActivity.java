@@ -110,7 +110,7 @@ public class PersonActivity extends Activity {
 			Config.DEBUG_VIZ = false;
 			Config.TRIGGER_THRESHOLD = 0.85;
 			Config.NOISE_MODE = false;
-			Config.AWAKE_MODE = true;
+			Config.AWAKE_MODE = false;
 			Config.SUBTLE_FACTOR = 0;
 			sessionIntent.putExtra("activate", true);
 		} else if (activityText.getText().toString().equals("adebug")) {
@@ -126,6 +126,24 @@ public class PersonActivity extends Activity {
 			Config.NOISE_MODE = false;
 			Config.AWAKE_MODE = false;
 			Config.SUBTLE_FACTOR = 0;
+		}
+		if (activityText.getText().toString().equals("activate")) {
+			Config.SESSION_PAUSE_TIME = 120;
+		} else if (activityText.getText().toString().equals("prep")) {
+			Config.SESSION_PAUSE_TIME = 3;
+		} else {
+			Config.SESSION_PAUSE_TIME = 10;
+		}
+
+		if (activityText.getText().toString().equals("activate")) {
+			Config.NUM_CYCLES = 120;
+			Config.NUM_REPS = (4 * 60) / (4 * 2);
+		} else if (activityText.getText().toString().contains("debug")) {
+			Config.NUM_CYCLES = 50;
+			Config.NUM_REPS = 1;
+		} else {
+			Config.NUM_CYCLES = 10;
+			Config.NUM_REPS = 5;
 		}
 		PersonActivity.this.startActivity(sessionIntent);
 	}

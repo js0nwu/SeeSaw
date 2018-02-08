@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class SynchroActivity extends Activity implements SensorEventListener {
 
@@ -82,6 +83,11 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 
 	private Long beginTimestamp;
 
+	private int notificationReps = 0;
+	private int activationReps = 0;
+
+	private int numReps = 0;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 
@@ -108,6 +114,14 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 		person = sessionIntent.getStringExtra("person");
 		activity = sessionIntent.getStringExtra("activity");
 		activate = sessionIntent.getBooleanExtra("activate", false);
+
+		if (activate) {
+			numReps = Config.NUM_REPS * 2;
+			notificationReps = Config.NUM_REPS;
+			activationReps = Config.NUM_REPS;
+		} else {
+			numReps = Config.NUM_REPS;
+		}
 
 		sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		if (sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD) != null){
@@ -157,7 +171,31 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 	private void initializeDetector() {
 		if(syncDetector != null) syncDetector.isRunning = false;
 		syncDetector = new SynchroDetector(true);
-		syncDetector.setActivationMode(activate);
+		if (activate) {
+			boolean activationMode;
+			if (activationReps == 0) {
+				activationMode = false;
+			} else if (notificationReps == 0) {
+				activationMode = true;
+			} else {
+				Random flipper = new Random();
+				int coinFlip = flipper.nextInt(2);
+				if (coinFlip == 0) {
+					activationMode = true;
+				} else {
+					activationMode = false;
+				}
+			}
+			Config.AWAKE_MODE = activationMode;
+			syncDetector.setActivationMode(activationMode);
+			if (activationMode) {
+				activationReps--;
+			} else {
+				notificationReps--;
+			}
+		} else {
+			syncDetector.setActivationMode(false);
+		}
 		syncDetector.setEventRecognitionListener(new EventRecognitionListener() {
 			float corrTimestamp = 0;
 			float corrValue = 0;
@@ -245,6 +283,13 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 		}
 	};
 
+	public Runnable clearCircles = new Runnable() {
+		@Override
+		public void run() {
+			synchroView.clearCircles();
+		}
+	};
+
 	private class TickerRunnable implements Runnable {
 		private String experiment;
 		private int periodTime;
@@ -277,12 +322,30 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 				if(debugMode) Log.d(TAG, "cycle# " + i);
 				if (isLeft) {
 					String sensorStringLeft = "" + System.currentTimeMillis() + ",left," + lastConvertedTS;
-					runOnUiThread(drawLeftCircle);
+					if (activate) {
+						if (i < 10) {
+							runOnUiThread(drawLeftCircle);
+						} else {
+							counterText.setText("");
+							runOnUiThread(clearCircles);
+						}
+					} else {
+						runOnUiThread(drawLeftCircle);
+					}
 					postDrawTime = System.currentTimeMillis();
 					sensorData.add(sensorStringLeft);
 				} else {
 					String sensorStringRight = "" + System.currentTimeMillis() + ",right," + lastConvertedTS;
-					runOnUiThread(drawRightCircle);
+					if (activate) {
+						if (i < 10) {
+							runOnUiThread(drawRightCircle);
+						} else {
+							counterText.setText("");
+							runOnUiThread(clearCircles);
+						}
+					} else {
+						runOnUiThread(drawRightCircle);
+					}
 					postDrawTime = System.currentTimeMillis();
 					sensorData.add(sensorStringRight);
 					cycles++;
@@ -324,7 +387,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 				closeApp();
 				return;
 			}
-			if (experimentCounter == Config.NUM_REPS) {
+			if (experimentCounter == numReps) {
 				if(debugMode) Log.d(TAG, "closing app");
 				closeApp();
 				return;

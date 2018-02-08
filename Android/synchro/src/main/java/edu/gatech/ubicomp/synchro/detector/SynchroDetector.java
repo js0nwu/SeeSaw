@@ -109,6 +109,11 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 
 	public void setActivationMode(boolean b) {
 		Config.AUTOCORRELATION_MODE = b;
+		if (b) {
+			Config.X_MIN_VAR = 1;
+		} else {
+			Config.X_MIN_VAR = 0;
+		}
 	}
 
 	private double clipValue(double value, double min, double max) {
@@ -1160,11 +1165,15 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 		if (originalCorr > 0) {
 		    if (!Config.AUTOCORRELATION_MODE) {
 		    	syncDirection = "right";
+			} else {
+		    	syncDirection = "auto";
 			}
 			directions.add("right");
 		} else {
 		    if (!Config.AUTOCORRELATION_MODE) {
 		    	syncDirection = "left";
+			} else {
+		    	syncDirection = "auto";
 			}
 			directions.add("left");
 		}
