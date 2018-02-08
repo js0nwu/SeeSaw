@@ -287,6 +287,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 		@Override
 		public void run() {
 			synchroView.clearCircles();
+			counterText.setText("");
 		}
 	};
 
@@ -326,7 +327,6 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 						if (i < 10) {
 							runOnUiThread(drawLeftCircle);
 						} else {
-							counterText.setText("");
 							runOnUiThread(clearCircles);
 						}
 					} else {
@@ -340,7 +340,6 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 						if (i < 10) {
 							runOnUiThread(drawRightCircle);
 						} else {
-							counterText.setText("");
 							runOnUiThread(clearCircles);
 						}
 					} else {
