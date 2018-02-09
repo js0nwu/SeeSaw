@@ -159,10 +159,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 
 		// Register listener
 		double samplingPeriodUs = Math.pow(10, 6) / Config.SAMPLING_RATE;
-//		sensorManager.registerListener(this, magnetometer, (int)samplingPeriodUs, sensorDataHandler);
-//		sensorManager.registerListener(this, accelerometer, (int) samplingPeriodUs, sensorDataHandler);
         sensorManager.registerListener(this, gyroscope, (int) samplingPeriodUs, sensorDataHandler);
-		//sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_NORMAL, sensorDataHandler);
 
 		// Init the detector
 		initializeDetector();
@@ -335,6 +332,8 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 							runOnUiThread(drawLeftCircle);
 						} else {
 							runOnUiThread(clearCircles);
+							syncDetector.isRunning = false;
+							isRunning = false;
 						}
 					} else {
 						runOnUiThread(drawLeftCircle);
@@ -348,6 +347,8 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 							runOnUiThread(drawRightCircle);
 						} else {
 							runOnUiThread(clearCircles);
+							syncDetector.isRunning = false;
+							isRunning = false;
 						}
 					} else {
 						runOnUiThread(drawRightCircle);
@@ -503,6 +504,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 			e.printStackTrace();
 		}
 		Log.d(TAG, "data write successful");
+		data.clear();
 	}
 
 	private class SaveSensorsTask extends AsyncTask<Void, Void, Boolean> {
