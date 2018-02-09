@@ -88,6 +88,8 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 
 	private int numReps = 0;
 
+	private PowerManager.WakeLock wakeLock = null;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 
@@ -103,6 +105,10 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 		synchroView = (SynchroView) findViewById(R.id.synchroView);
 		counterText = (TextView) findViewById(R.id.counterText);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+		wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+				"SynchroWake");
+		wakeLock.acquire();
 		init();
 	}
 
@@ -162,7 +168,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 		initializeDetector();
 
 		// Handler for flashing
-		flashUIThread = new HandlerThread("FlashUI", Process.THREAD_PRIORITY_FOREGROUND);
+		flashUIThread = new HandlerThread("FlashUI", Process.THREAD_PRIORITY_DEFAULT);
 		flashUIThread.start();
 		flashUIHandler = new Handler(flashUIThread.getLooper());
 		flashUIHandler.post(pauser);
@@ -266,6 +272,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		wakeLock.release();
 		if(debugMode) Log.d(TAG, "ondestroy");
 	}
 
