@@ -88,6 +88,8 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 
 	private int numReps = 0;
 
+	private PowerManager.WakeLock wakeLock = null;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 
@@ -103,6 +105,10 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 		synchroView = (SynchroView) findViewById(R.id.synchroView);
 		counterText = (TextView) findViewById(R.id.counterText);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+		wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+				"SynchroWake");
+		wakeLock.acquire();
 		init();
 	}
 
@@ -153,16 +159,13 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 
 		// Register listener
 		double samplingPeriodUs = Math.pow(10, 6) / Config.SAMPLING_RATE;
-//		sensorManager.registerListener(this, magnetometer, (int)samplingPeriodUs, sensorDataHandler);
-//		sensorManager.registerListener(this, accelerometer, (int) samplingPeriodUs, sensorDataHandler);
         sensorManager.registerListener(this, gyroscope, (int) samplingPeriodUs, sensorDataHandler);
-		//sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_NORMAL, sensorDataHandler);
 
 		// Init the detector
 		initializeDetector();
 
 		// Handler for flashing
-		flashUIThread = new HandlerThread("FlashUI", Process.THREAD_PRIORITY_FOREGROUND);
+		flashUIThread = new HandlerThread("FlashUI", Process.THREAD_PRIORITY_DEFAULT);
 		flashUIThread.start();
 		flashUIHandler = new Handler(flashUIThread.getLooper());
 		flashUIHandler.post(pauser);
@@ -266,6 +269,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		wakeLock.release();
 		if(debugMode) Log.d(TAG, "ondestroy");
 	}
 
@@ -287,6 +291,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 		@Override
 		public void run() {
 			synchroView.clearCircles();
+			counterText.setText("");
 		}
 	};
 
@@ -326,8 +331,9 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 						if (i < 10) {
 							runOnUiThread(drawLeftCircle);
 						} else {
-							counterText.setText("");
 							runOnUiThread(clearCircles);
+							syncDetector.isRunning = false;
+							isRunning = false;
 						}
 					} else {
 						runOnUiThread(drawLeftCircle);
@@ -340,8 +346,9 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 						if (i < 10) {
 							runOnUiThread(drawRightCircle);
 						} else {
-							counterText.setText("");
 							runOnUiThread(clearCircles);
+							syncDetector.isRunning = false;
+							isRunning = false;
 						}
 					} else {
 						runOnUiThread(drawRightCircle);
@@ -497,6 +504,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 			e.printStackTrace();
 		}
 		Log.d(TAG, "data write successful");
+		data.clear();
 	}
 
 	private class SaveSensorsTask extends AsyncTask<Void, Void, Boolean> {

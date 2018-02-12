@@ -137,7 +137,7 @@ public class PersonActivity extends Activity {
 
 		if (activityText.getText().toString().equals("activate")) {
 			Config.NUM_CYCLES = 120;
-			Config.NUM_REPS = (4 * 60) / (4 * 2);
+			Config.NUM_REPS = 30; // (4 * 60) / (4 * 2)
 		} else if (activityText.getText().toString().contains("debug")) {
 			Config.NUM_CYCLES = 50;
 			Config.NUM_REPS = 1;
