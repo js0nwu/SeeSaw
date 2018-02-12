@@ -45,7 +45,8 @@ public class MainStudyActivity {
 //        usernameRootFolderMap.put("jwpilly", "/Users/jwpilly/Research/Synchro/Study_v1_750");
 //        usernameRootFolderMap.put("jwpilly", "/media/jwpilly/PillowDisk/Research/Synchro/synchrowatch/2017-10-24/Synchro/P3/");
 //        usernameRootFolderMap.put("jwpilly", "/media/jwpilly/PillowDisk/Research/Synchro/synchrowatch/2018-01-09/Synchro/P21/");
-        usernameRootFolderMap.put("jwpilly", "/media/jwpilly/PillowDisk/Research/Synchro/synchrowatch/2018-01-10/Synchro/P2/");
+//        usernameRootFolderMap.put("jwpilly", "/media/jwpilly/PillowDisk/Research/Synchro/synchrowatch/2018-01-10/Synchro/P2/");
+		usernameRootFolderMap.put("jwpilly", "/home/jwpilly/Downloads/seesaw_data/data1/Synchro/");
 
 		String username = System.getProperty("user.name");
 		if (username != null && usernameRootFolderMap.containsKey(username))
@@ -66,7 +67,7 @@ public class MainStudyActivity {
 			}
 		});
 		for (int i = 0; i < directories.length; i++) {
-			String pFolder = baseFile + "/" + directories[i] + "/";
+			String pFolder = baseFile + "/" + directories[i] + "/synchro";
 			System.out.println(pFolder);
 			File pFile = new File(pFolder);
             String[] pDirectories = pFile.list(new FilenameFilter() {
@@ -77,12 +78,13 @@ public class MainStudyActivity {
             });
             for (int j = 0; j < pDirectories.length; j++) {
 				inputFolder = pFolder + "/" + pDirectories[j];
-				System.out.println(inputFolder);
+				System.out.println("input: " + inputFolder);
 				if(Config.USE_SYNTHETICDATA) {
                     dataPath = inputFolder + "/synthdata";
                 } else {
                     dataPath = inputFolder + "/data";
                 }
+                System.out.println("data: " + dataPath);
                 outputPath = inputFolder + "/output";
                 windowPath = inputFolder + "/windows";
 
