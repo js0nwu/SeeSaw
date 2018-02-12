@@ -332,7 +332,7 @@ def correlateSyncMagFile(filePath, noise=False):
     avg_deltas = np.mean(deltas, axis=0)
     return avg_corrs, avg_deltas
 
-def syncRateFile(filePath, noise=False):
+def syncRateFile(filePath, noise=False, xm=None):
     thresholds = np.linspace(0.2, 1, 17)
     times = np.linspace(0, 10, 51)
     dataPath = filePath + "/data/"
@@ -396,6 +396,14 @@ def syncRateFile(filePath, noise=False):
                         else:
                             before_sync = df.timestamp < sdf_sync
                             df.loc[before_sync, 'correlation'] = 0
+                if xm is not None and not noise:
+                    if len(sdf) == 2:
+                        rdftest = rdf[rdf.adjusted_time < sdf_sync]
+                        xrdftest = np.var(rdftest.x.values)
+                    else:
+                        xrdftest = np.var(rdf.x.values)
+                    if xrdftest > xm:
+                        continue
             dfsync = df[(df.correlation >= i) & (df.timestamp - st > IGNORE_TIME)]
             if noise:
                 if sdf is None or len(sdf) != 2:
@@ -409,6 +417,7 @@ def syncRateFile(filePath, noise=False):
             else:
                 sync_time = dfsync.timestamp.values[0] if len(dfsync > 0) else -1
                 sync_time = sync_time - st if sync_time != -1 else -1
+            
             for ti in range(len(times)):
                 scmp = sync_time / 1000 if sync_time != -1 else -1
                 if sync_time != -1 and scmp <= times[ti]:
