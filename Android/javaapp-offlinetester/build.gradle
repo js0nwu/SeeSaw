@@ -1,7 +1,8 @@
 apply plugin: 'java'
 
 dependencies {
-    implementation project(':synchro')
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile project(':synchro')
 }
 
 sourceCompatibility = "1.7"
