@@ -165,6 +165,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 		flashUIThread = new HandlerThread("FlashUI", Process.THREAD_PRIORITY_FOREGROUND);
 		flashUIThread.start();
 		flashUIHandler = new Handler(flashUIThread.getLooper());
+//        flashUIHandler = new Handler();
 		flashUIHandler.post(pauser);
 	}
 
@@ -369,7 +370,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 			}
 			if(debugMode) Log.d(TAG, "ending tickerrunnable");
 			if(debugMode) Log.d(TAG, "launching pauser");
-			isRunning = false;
+//			isRunning = false;
 			String endTimeStamp = "" + System.currentTimeMillis() + ",end";
 			sensorData.add(endTimeStamp);
 			saveSensorData();

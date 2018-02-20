@@ -141,6 +141,9 @@ public class PersonActivity extends Activity {
 		} else if (activityText.getText().toString().contains("debug")) {
 			Config.NUM_CYCLES = 50;
 			Config.NUM_REPS = 1;
+		} else if (activityText.getText().toString().contains("prep")) {
+			Config.NUM_CYCLES = 10;
+			Config.NUM_REPS = 5;
 		} else {
 			Config.NUM_CYCLES = 10;
 			Config.NUM_REPS = 5;
