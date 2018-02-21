@@ -43,8 +43,8 @@ for root, folders, files in os.walk(baseFilePath):
         for efp in efps:
             fps[th] += efp[th]
         
-for th in fps: # 3 hours of noise for each condition
-    fps[th] = fps[th] / 3
+# for th in fps: # 3 hours of noise for each condition
+#     fps[th] = fps[th] / 3
 
 fps1 = fps
 ACTIVITY = 'activatenotif'
@@ -66,8 +66,8 @@ for root, folders, files in os.walk(baseFilePath):
         for efp in efps:
             fps[th] += efp[th]
         
-for th in fps: # 3 hours of noise for each condition
-    fps[th] = fps[th] / 3
+# for th in fps: # 3 hours of noise for each condition
+#     fps[th] = fps[th] / 3
 
 fps2 = fps
 
@@ -76,10 +76,10 @@ ind = np.arange(len(thresholds))
 labels = ["{0:.2f}".format(thresholds[i]) for i in range(len(thresholds))]
 y1 = [fps1[thresholds[i]] for i in range(len(thresholds))]
 y2 = [fps2[thresholds[i]] for i in range(len(thresholds))]
-plt.plot(thresholds, y1, marker="o", linestyle="None")
-plt.plot(thresholds, y2, marker="^", linestyle="None")
+notif = plt.plot(thresholds, y1, marker="o", linestyle="None", label="With Stimulus")
+awake = plt.plot(thresholds, y2, marker="^", linestyle="None", label="Without Stimulus")
 #plt.xticks( 0.1 + ind + width / 1.5, labels)
 plt.xlabel("Threshold")
-plt.ylabel("False Positives per Hour")
-plt.legend(loc='center left', bbox_to_anchor=(1, 0.2))
+plt.ylabel("False Positives")
+plt.legend(loc='best')
 plt.savefig("inthewildfph.png", bbox_inches="tight")

@@ -87,6 +87,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 	private int activationReps = 0;
 
 	private int numReps = 0;
+	private boolean synced = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -230,6 +231,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 										counterText.setText("Sync " + direction.substring(0, 1).toUpperCase() + direction.substring(1) + " Detected");
 										corrData.add(corrTimestamp + "," + corrValue + "," + corrCounter + "," + "sync " + direction);
 										syncTimestampData.add(timeRecognized + "," + "sync " + direction + "," + result);
+										synced = true;
 									}
 								}
 							}
@@ -280,6 +282,9 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 	public Runnable drawRightCircle = new Runnable() {
 		@Override
 		public void run() {
+			if (!synced) {
+				vibrateShort();
+			}
 			synchroView.drawRightCircle();
 		}
 	};
@@ -314,6 +319,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 			if(debugMode) Log.d(TAG, "starting tickerrunnable");
 			long lastTime = startTime;
 			long currentTime = 0;
+			synced = false;
 			for (int i = 0; i < Config.NUM_CYCLES * 2; i++) {
 				long nextStartTime = startTime + (periodTime * i);
 
@@ -368,6 +374,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 					e.printStackTrace();
 				}
 			}
+			synced = true;
 			if(debugMode) Log.d(TAG, "ending tickerrunnable");
 			if(debugMode) Log.d(TAG, "launching pauser");
 //			isRunning = false;
@@ -627,6 +634,14 @@ public class SynchroActivity extends Activity implements SensorEventListener {
         Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         v.vibrate(500);
     }
+
+    private void vibrateShort() {
+	    if (Config.NOISE_MODE) {
+	    	return;
+		}
+		Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+		v.vibrate(250);
+	}
 
     private void closeApp() {
 		if (Config.NOISE_MODE) {

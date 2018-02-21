@@ -12,8 +12,8 @@ for root, dirs, files in os.walk(baseFilePath):
     for file in files:
         if not file.endswith("sync.csv"):
             continue
-        if "prep" not in root:
-            continue
+        # if "prep" not in root:
+        #     continue
         participant = [f for f in root.split("/") if f.startswith("P")][0]
         if participant not in times:
             times[participant] = []
@@ -36,8 +36,8 @@ for p in times:
         num_preps = len(times[p])
     times[p] = [e[0] for e in sorted(times[p], key=lambda x : x[1])]
 
-if num_preps > 20:
-    num_preps = 20
+if num_preps > 60:
+    num_preps = 60
 learn = {}
 for i in range(num_preps):
     syncs = []
@@ -76,7 +76,7 @@ ax1.plot(xs, ys, marker="o", linestyle="None", color="black")
 ax1.set_ylim(0, 10)
 ax1.set_xlim(0, 20)
 ax2.set_ylim(0, 10)
-ax2.set_xlim(0, 20)
+ax2.set_xlim(0, num_preps)
 ax1.set_ylabel("Sync Time (s)", color="black")
 ax1.set_xlabel("Practice Session #")
 ax2.set_ylabel("# of Misses", color="blue")
