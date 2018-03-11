@@ -640,7 +640,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 	    	return;
 		}
 		Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-		v.vibrate(250);
+		v.vibrate(100);
 	}
 
     private void closeApp() {
