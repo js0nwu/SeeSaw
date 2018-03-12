@@ -275,6 +275,9 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 	public Runnable drawLeftCircle = new Runnable() {
 		@Override
 		public void run() {
+			if (!synced) {
+				vibrateShort();
+			}
 			synchroView.drawLeftCircle();
 		}
 	};
@@ -282,9 +285,6 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 	public Runnable drawRightCircle = new Runnable() {
 		@Override
 		public void run() {
-			if (!synced) {
-				vibrateShort();
-			}
 			synchroView.drawRightCircle();
 		}
 	};
@@ -632,7 +632,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 			return;
 		}
         Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        v.vibrate(500);
+        v.vibrate(50);
     }
 
     private void vibrateShort() {
@@ -640,7 +640,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 	    	return;
 		}
 		Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-		v.vibrate(100);
+		v.vibrate(50);
 	}
 
     private void closeApp() {
