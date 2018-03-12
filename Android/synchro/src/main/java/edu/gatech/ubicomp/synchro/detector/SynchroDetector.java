@@ -112,7 +112,7 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 		if (b) {
 			Config.X_MIN_VAR = 1;
 		} else {
-			Config.X_MIN_VAR = 0;
+			Config.X_MIN_VAR = 0.2;
 		}
 	}
 
