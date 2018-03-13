@@ -54,6 +54,8 @@ public class SwipeActivity extends Activity implements SensorEventListener {
 	private String activity;
 	private Long vibrateTimestamp;
 
+	private boolean synced = true;
+
 	private Handler taskHandler = new Handler();
 	private SensorManager mSensorManager;
 	private HandlerThread mServiceThread;
@@ -63,6 +65,9 @@ public class SwipeActivity extends Activity implements SensorEventListener {
 	private Sensor mAccelerometer;
 	private Sensor mGyroscope;
 	private Sensor mMagnetometer;
+
+	private HandlerThread flashUIThread;
+	private Handler flashUIHandler;
 
 	private DateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
 
@@ -199,9 +204,19 @@ public class SwipeActivity extends Activity implements SensorEventListener {
 		mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_UI, mServiceHandler);
 		mSensorManager.registerListener(this, mGyroscope, SensorManager.SENSOR_DELAY_UI, mServiceHandler);
 		mSensorManager.registerListener(this, mMagnetometer, SensorManager.SENSOR_DELAY_UI, mServiceHandler);
-
+		flashUIThread = new HandlerThread("FlashUI", Process.THREAD_PRIORITY_FOREGROUND);
+		flashUIThread.start();
+		flashUIHandler = new Handler(flashUIThread.getLooper());
+		flashUIHandler.post(pauser);
 		taskHandler.post(pauser);
     }
+
+	public Runnable sendVibration = new Runnable() {
+		@Override
+		public void run() {
+			vibrateShort();
+		}
+	};
 
 	private final class ServiceHandler extends Handler {
 		public ServiceHandler(Looper looper) {
@@ -239,7 +254,9 @@ public class SwipeActivity extends Activity implements SensorEventListener {
 			} else {
 				isRecording = true;
 				hideControls();
-				swipeView.resetSwipeDetectedColors();
+				if (swipeView != null) {
+					swipeView.resetSwipeDetectedColors();
+				}
 				int delayTime = 0;
 				if(activity.equals("prep")) {
 					delayTime = 3000;
@@ -259,15 +276,16 @@ public class SwipeActivity extends Activity implements SensorEventListener {
 			vibrateTimestamp = System.currentTimeMillis();
 			String vibrateLog = "" + vibrateTimestamp + ",vibrate,0,0";
 			swipeData.add(vibrateLog);
-			vibrate();
 			showControls();
+			synced = false;
+			flashUIHandler.post(new TickerRunnable());
 			experimentCounter++;
 		}
 	};
 
 	private void swipeDetected(String direction) {
+	    synced = true;
 		if(debugMode) Log.d(TAG, "entering swipedetected");
-
 		Long swipeTimestamp = System.currentTimeMillis();
 		String swipeLog = "" + swipeTimestamp + ",swipe " + direction + ",0,0";
 
@@ -402,13 +420,19 @@ public class SwipeActivity extends Activity implements SensorEventListener {
 
 	private void vibrate() {
 		Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-		v.vibrate(500);
+		v.vibrate(50);
+	}
+
+	private void vibrateShort() {
+		Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+		v.vibrate(50);
 	}
 
 	private void closeApp() {
 		isRecording = false;
 		taskHandler.removeCallbacks(animator);
 		taskHandler.removeCallbacks(pauser);
+		flashUIHandler.removeCallbacks(null);
 		mSensorManager.unregisterListener(this);
 		finish();
 	}
@@ -423,6 +447,41 @@ public class SwipeActivity extends Activity implements SensorEventListener {
 			k++;
 		} while (p > L);
 		return (k - 1) * 1000;
+	}
+
+	public class TickerRunnable implements Runnable {
+
+		private long startTime;
+		private long periodTime = 1000;
+
+		public TickerRunnable() {
+			startTime = System.currentTimeMillis();
+		}
+
+		public void run() {
+			long lastTime = startTime;
+			long postDrawTime = 0;
+			long currentTime = 0;
+			long waitTime = 0;
+			for (int i = 0; i < 10; i++) {
+				if (synced) {
+					return;
+				}
+				long nextStartTime = startTime + (i * periodTime);
+				currentTime = System.currentTimeMillis();
+				lastTime = currentTime;
+				runOnUiThread(sendVibration);
+				postDrawTime = System.currentTimeMillis();
+				waitTime = periodTime - (postDrawTime - nextStartTime);
+				long cycleTime = periodTime + waitTime;
+				if (Math.abs(cycleTime) > periodTime) cycleTime = periodTime;
+				try {
+					Thread.sleep(cycleTime);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 }
 

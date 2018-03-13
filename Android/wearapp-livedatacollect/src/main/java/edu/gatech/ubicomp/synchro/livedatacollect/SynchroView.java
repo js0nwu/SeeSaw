@@ -95,17 +95,17 @@ public class SynchroView extends View {
 		} else {
 			if(debugMode) Log.d(TAG, "inside set for non debug");
 
-			left = 0;
-			top = (screenH / 2) - (Config.ICON_HEIGHT / 2);
-			right = Config.ICON_WIDTH;
-			bottom = (screenH / 2) + (Config.ICON_HEIGHT / 2);
+            top = 0;
+            left = (screenW / 2) - (Config.ICON_WIDTH / 2);
+            right = (screenW / 2) + (Config.ICON_WIDTH / 2);
+            bottom = Config.ICON_HEIGHT;
 			if(debugMode) Log.d(TAG, "" + left + "," + top + "," + right + "," + bottom);
 			leftCircle.set(left, top, right, bottom);
 
-			left = screenW - Config.ICON_WIDTH;
-			top = (screenH / 2) - (Config.ICON_HEIGHT / 2);
-			right = screenW;
-			bottom = (screenH / 2) + (Config.ICON_HEIGHT / 2);
+			top = screenH - Config.ICON_HEIGHT;
+			left = (screenW / 2) - (Config.ICON_WIDTH / 2);
+			right = (screenW / 2) + (Config.ICON_WIDTH / 2);
+			bottom = screenH;
 			if(debugMode) Log.d(TAG, "" + left + "," + top + "," + right + "," + bottom);
 			rightCircle.set(left, top, right, bottom);
 		}
@@ -151,10 +151,10 @@ public class SynchroView extends View {
 	public void setFeedback(float score, String direction) {
 //		double newScaleFactor = Math.max((score - 0.35),0) / (1 - 0.35);
         double newScaleFactor = score;
-		if(direction.equals("left")) {
+		if(direction.equals("top")) {
 			leftCirclePaint.setColor(Color.rgb(0,(int)(newScaleFactor*255), 255 - (int)(newScaleFactor*255)));
 			rightCirclePaint.setColor(Color.rgb(0, 0, 255));
-		} else if (direction.equals("right")) {
+		} else if (direction.equals("bottom")) {
 			leftCirclePaint.setColor(Color.rgb(0, 0, 255));
 			rightCirclePaint.setColor(Color.rgb(0,(int)(newScaleFactor*255), 255 - (int)(newScaleFactor*255)));
 		}

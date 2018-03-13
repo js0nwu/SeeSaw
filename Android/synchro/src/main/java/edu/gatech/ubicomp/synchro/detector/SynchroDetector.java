@@ -492,12 +492,6 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 					secondVectorTime = tmpFirstVectorTime;
 				}
 
-//				System.out.println(firstVector);
-//				System.out.println(secondVector);
-				Double meanShiftTime = secondVectorTime - firstVectorTime;
-
-//				System.out.println(firstVectorTime + "," + secondVectorTime + "," + meanShiftTime + "," + firstVector + "," + secondVector);
-
 				projectLeftVector = firstVector;
 				projectRightVector = secondVector;
 				projectMeanVector = meanVector;
@@ -510,18 +504,6 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 				}
 				windowVectors.clear();
 
-//				if (projectLeftVector.getNorm() <= projectMeanVector.getNorm()) {
-//					syncDirection = "right";
-//				} else if (projectRightVector.getNorm() < projectMeanVector.getNorm()) {
-//					syncDirection = "left";
-//				}
-
-//				System.out.println(projectMeanVector);
-//				+ "," + projectMeanVector + "," + projectRightVector);
-//				System.out.println("right " + projectRightVector);
-//				System.out.println("left - right " + projectLeftVector.subtract(projectRightVector));
-//				System.out.println("mean " + projectMeanVector);
-
 				if(debugMode) System.out.println("left sync inside feature");
 
 				for (int i = 0; i < windowValues.length; i++) {
@@ -530,9 +512,7 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 						Vector windowVector;
 						windowVector = new Vector3D(windowValues[i]);
 						double featureValue = deltaProjectTransform(projectLeftVector, projectRightVector, projectMeanVector, windowVector);
-//                        double featureValue = windowValues[i][0];
 						double syncThresholdValue = deltaVectorThreshold(projectLeftVector, projectRightVector, projectMeanVector);
-//					System.out.println("feature: " + featureKey + "," + featureValue);
 						featureMap.put(featureKey, featureValue);
 						syncThresholdMap.put(featureKey, ""+syncThresholdValue);
 					}
@@ -679,39 +659,27 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 					minIndex = corrIndex;
 				}
 			}
-//			int correlateIndex = DSP.argmax(crossCorrelation);
 			int shiftFactor = referenceTS.length - 1;
 			int maxShift = shiftFactor - maxIndex;
-//			return maxShift;
 			int minShift = shiftFactor - minIndex;
-//			System.out.println("min: " + minValue + " max: " + maxValue);
-//			return shiftFactor - correlateIndex;
 			double ratio1 = Math.abs(maxValue / minValue);
 			double ratio2 = Math.abs(minValue / maxValue);
-//            System.out.println("r1: " + ratio1 + " r2: " + ratio2);
 			double ratioThreshold = 1.2;
 			if (ratio1 > ratioThreshold) {
-//                System.out.println("right");
 				return maxShift;
 			} else if (ratio2 > ratioThreshold) {
-//            	System.out.println("left");
 				return minShift;
 			} else {
-//            	System.out.println("maxshift: " + maxShift + " minshift: " + minShift);
 				if (Math.abs(maxShift) == Math.abs(minShift)) {
 					if (ratio1 > ratio2) {
-//            			System.out.println("right");
 						return maxShift;
 					} else {
-//            			System.out.println("left");
 						return minShift;
 					}
 				}
 				else if (Math.abs(maxShift) < Math.abs(minShift)) {
-//            		System.out.println("right");
 					return maxShift;
 				} else {
-//            		System.out.println("left");
 					return minShift;
 				}
 			}
@@ -1164,18 +1132,18 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 		double originalCorr = pmcc(rs2, ps2);
 		if (originalCorr > 0) {
 		    if (!Config.AUTOCORRELATION_MODE) {
-		    	syncDirection = "right";
+		    	syncDirection = "bottom";
 			} else {
 		    	syncDirection = "auto";
 			}
-			directions.add("right");
+			directions.add("bottom");
 		} else {
 		    if (!Config.AUTOCORRELATION_MODE) {
-		    	syncDirection = "left";
+		    	syncDirection = "top";
 			} else {
 		    	syncDirection = "auto";
 			}
-			directions.add("left");
+			directions.add("top");
 		}
 		while (directions.size() > Config.X_WINDOW_SIZE) {
 			directions.remove(0);

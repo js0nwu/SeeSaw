@@ -328,7 +328,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 				lastTime = currentTime;
 				if(debugMode) Log.d(TAG, "cycle# " + i);
 				if (isLeft) {
-					String sensorStringLeft = "" + System.currentTimeMillis() + ",left," + lastConvertedTS;
+					String sensorStringLeft = "" + System.currentTimeMillis() + ",top," + lastConvertedTS;
 					if (activate) {
 						if (i < 10) {
 							runOnUiThread(drawLeftCircle);
@@ -342,7 +342,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 					postDrawTime = System.currentTimeMillis();
 					sensorData.add(sensorStringLeft);
 				} else {
-					String sensorStringRight = "" + System.currentTimeMillis() + ",right," + lastConvertedTS;
+					String sensorStringRight = "" + System.currentTimeMillis() + ",bottom," + lastConvertedTS;
 					if (activate) {
 						if (i < 10) {
 							runOnUiThread(drawRightCircle);
@@ -485,7 +485,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 				if (Config.AWAKE_MODE) {
 					counterText.setText("Awake Me");
 				} else {
-					counterText.setText("Sync Right");
+					counterText.setText("Sync Top");
 				}
 				synchroView.setVisibility(View.VISIBLE);
 				counterText.setVisibility(View.VISIBLE);
