@@ -19,8 +19,6 @@ import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import edu.gatech.ubicomp.flux.*;
-
 public class MainActivity extends Activity implements SensorEventListener {
 
     private static final int FLASH_LENGTH = 1000;

@@ -20,8 +20,7 @@ import edu.gatech.ubicomp.synchro.detector.EventRecognitionListener;
 import edu.gatech.ubicomp.synchro.detector.SynchroDetector;
 import edu.gatech.ubicomp.synchro.detector.Tuple2;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -500,9 +499,22 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 		File outputFile = new File(dir, filename);
 		Log.v(TAG, "outputFile: " + outputFile.getAbsolutePath());
 		try {
-			FileUtils.writeLines(outputFile, data);
+//			FileUtils.writeLines(outputFile, data);
+            FileOutputStream fos = new FileOutputStream(outputFile);
+            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
+            for (String line : data) {
+            	bw.write(line);
+            	bw.newLine();
+			}
+            bw.close();
+            fos.close();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+		}
+
+		if (data != null) {
+			data.clear();
 		}
 		Log.d(TAG, "data write successful");
 	}
@@ -632,7 +644,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 			return;
 		}
         Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        v.vibrate(50);
+        v.vibrate(100);
     }
 
     private void vibrateShort() {
@@ -640,7 +652,7 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 	    	return;
 		}
 		Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-		v.vibrate(50);
+		v.vibrate(100);
 	}
 
     private void closeApp() {

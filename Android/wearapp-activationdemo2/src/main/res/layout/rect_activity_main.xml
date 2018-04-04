@@ -6,7 +6,7 @@
               android:orientation="vertical"
               android:clickable="true"
               android:id="@+id/screen"
-              tools:context="edu.gatech.ubicomp.declineCall.MainActivity"
+              tools:context="edu.gatech.ubicomp.wearappMovement.MainActivity"
               tools:deviceIds="wear_square">
 
     <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/watch"/>

@@ -6,10 +6,10 @@
               android:orientation="vertical"
               android:clickable="true"
               android:id="@+id/screen"
-              tools:context="edu.gatech.ubicomp.declineCall.MainActivity"
+              tools:context="edu.gatech.ubicomp.wearappMovement.MainActivity"
               tools:deviceIds="wear_square">
 
-    <edu.gatech.ubicomp.declineCall.OrbitsView
+    <edu.gatech.ubicomp.wearappMovement.OrbitsView
         android:id="@+id/orbits"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>

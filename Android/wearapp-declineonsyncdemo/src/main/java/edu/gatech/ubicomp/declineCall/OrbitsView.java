@@ -1,4 +1,4 @@
-package edu.gatech.ubicomp.declineCall;
+package edu.gatech.ubicomp.wearappMovement;
 
 import android.content.Context;
 import android.graphics.Canvas;

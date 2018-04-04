@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Wearapp-movement sender</string>
+    <string name="hello_round">Hello Round World!</string>
+    <string name="hello_square">Hello Square World!</string>
+    <string name="phone_message">Check your phone!</string>
+    <string name="title_activity_phone">PhoneActivity</string>
+</resources>

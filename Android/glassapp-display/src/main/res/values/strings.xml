@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Stimulus Display</string>
+    <string name="title_activity_main">Stimulus Immersion</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="title_activity_immerse">Stimulus Immersion</string>
+</resources>

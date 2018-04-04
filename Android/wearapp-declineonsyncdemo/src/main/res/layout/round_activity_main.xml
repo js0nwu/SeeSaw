@@ -3,7 +3,7 @@
                 xmlns:tools="http://schemas.android.com/tools"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                tools:context="edu.gatech.ubicomp.buttons.edu.gatech.ubicomp.declineCall.MainActivity"
+                tools:context="edu.gatech.ubicomp.buttons.edu.gatech.ubicomp.wearappMovement.MainActivity"
                 tools:deviceIds="wear_round">
 
     <TextView

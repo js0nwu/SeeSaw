@@ -6,10 +6,10 @@
     android:id="@+id/screen2"
     android:background="@color/white">
 
-    <edu.gatech.ubicomp.declineCall.OrbitsView
+    <edu.gatech.ubicomp.wearappMovement.OrbitsView
         android:id="@+id/orbits2"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"></edu.gatech.ubicomp.declineCall.OrbitsView>
+        android:layout_height="match_parent"></edu.gatech.ubicomp.wearappMovement.OrbitsView>
 
     <ImageView
         android:layout_width="50dp"
