@@ -112,19 +112,16 @@ public class MainActivity extends Activity implements SensorEventListener {
                                 Toast.makeText(getApplicationContext(), "sent", Toast.LENGTH_SHORT).show();
                             }
                         });
-                        DatagramSocket socket = null ;
-
                         try
                         {
                             // Convert the arguments first, to ensure that they are valid
                             InetAddress host = InetAddress.getByName( "192.168.219.229" ) ;
                             int port         = 5001 ;
 
-                            if (socket != null) {
-                                socket.close();
-                            }
                             // Construct the socket
-                            socket = new DatagramSocket() ;
+                            if (socket == null) {
+                                socket = new DatagramSocket();
+                            }
 
                             // Construct the datagram packet
                             byte [] data = "accept".getBytes() ;
@@ -139,11 +136,6 @@ public class MainActivity extends Activity implements SensorEventListener {
                         catch( Exception e )
                         {
                             System.out.println( e ) ;
-                        }
-                        finally
-                        {
-                            if( socket != null )
-                                socket.close() ;
                         }
        				    lastSync = syncTime;
                     }
@@ -233,5 +225,14 @@ public class MainActivity extends Activity implements SensorEventListener {
 	protected void onPause() {
 		super.onPause();
 		sensorManager.unregisterListener(this);
+		if (socket != null) {
+		    if (socket.isConnected()) {
+		        socket.disconnect();
+            }
+            if (!socket.isClosed()) {
+		        socket.close();
+            }
+            socket = null;
+        }
 	}
 }

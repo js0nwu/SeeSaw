@@ -89,6 +89,8 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 
 	private ExponentialMovingAverage corrEWMA = new ExponentialMovingAverage(0.35);
 
+	private boolean keepData = true;
+
 	public SynchroDetector(boolean isOnline) {
 		this.detectorStatus = isOnline;
 
@@ -142,209 +144,6 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 		}
 		return randomPermutations;
 	}
-
-//	private double permutationEvaluateMean(double[] referenceSignal, double[] inputSignal, int N) {
-//
-//	}
-
-	public double[] fourierPassFilter(double[] data, double lowPass, double highPass, double frequency){
-		//data: input data, must be spaced equally in time.
-		//lowPass: The cutoff frequency at which
-		//frequency: The frequency of the input data.
-
-		//The apache Fft (Fast Fourier Transform) accepts arrays that are powers of 2.
-		int minPowerOf2 = 1;
-		while(minPowerOf2 < data.length)
-			minPowerOf2 = 2 * minPowerOf2;
-
-		//pad with zeros
-		double[] padded = new double[minPowerOf2];
-		for(int i = 0; i < data.length; i++)
-			padded[i] = data[i];
-
-
-		FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.STANDARD);
-		Complex[] fourierTransform = transformer.transform(padded, TransformType.FORWARD);
-
-		//build the frequency domain array
-		double[] frequencyDomain = new double[fourierTransform.length];
-		for(int i = 0; i < frequencyDomain.length; i++)
-			frequencyDomain[i] = frequency * i / (double)fourierTransform.length;
-
-		//build the classifier array, 2s are kept and 0s do not pass the filter
-		double[] keepPoints = new double[frequencyDomain.length];
-		keepPoints[0] = 1;
-		for(int i = 1; i < frequencyDomain.length; i++){
-			if(frequencyDomain[i] < lowPass && frequencyDomain[i] > highPass)
-				keepPoints[i] = 2;
-			else
-				keepPoints[i] = 0;
-		}
-
-		//filter the fft
-		for(int i = 0; i < fourierTransform.length; i++)
-			fourierTransform[i] = fourierTransform[i].multiply((double)keepPoints[i]);
-
-		//invert back to time domain
-		Complex[] reverseFourier = transformer.transform(fourierTransform, TransformType.INVERSE);
-
-		//get the real part of the reverse
-		double[] result = new double[data.length];
-		for(int i = 0; i< result.length; i++){
-			result[i] = reverseFourier[i].getReal();
-		}
-
-		return result;
-	}
-
-	private double permutationEvaluateSnr(double[] referenceSignal, double[] inputSignal, int N) {
-	    double[] ccResults = new double[N];
-	    double[][] permutations = generateRandomPermutations(inputSignal, N);
-	    for (int i = 0; i < N; i++) {
-	    	if (Config.USE_INPUTSIGNAL_EWMA) {
-	    		permutations[i] = getEWMA(permutations[i], inputEWMA);
-			}
-//	        double pResults = pmcc(referenceSignal, permutations[i]);
-            double pResults = zbsnr(referenceSignal, permutations[i]);
-	        ccResults[i] = pResults;
-        }
-        Mean m = new Mean();
-        double mean = m.evaluate(ccResults);
-		Variance variance = new Variance();
-        double var = variance.evaluate(ccResults);
-	    double std = Math.sqrt(var);
-	    if (Config.USE_INPUTSIGNAL_EWMA) {
-	    	inputSignal = getEWMA(inputSignal, inputEWMA);
-		}
-//	    double actualCC = pmcc(referenceSignal, inputSignal);
-        double actualCC = zbsnr(referenceSignal, inputSignal);
-	    double score = (actualCC - mean) / std;
-		Kurtosis kurtosis = new Kurtosis();
-		double kurt = kurtosis.evaluate(ccResults);
-//		System.out.println("score: " + score + " kurt: " + kurt + " var: " + var + " mean: " + mean + " actual: " + actualCC);
-	    return score;
-    }
-
-
-	private double permutationEvaluateSSE(double[] referenceSignal, double[] inputSignal, int N) {
-		double[] ccResults = new double[N];
-		double[][] permutations = generateRandomPermutations(inputSignal, N);
-		for (int i = 0; i < N; i++) {
-			if (Config.USE_INPUTSIGNAL_EWMA) {
-				permutations[i] = getEWMA(permutations[i], inputEWMA);
-			}
-//	        double pResults = pmcc(referenceSignal, permutations[i]);
-			double pResults = zbsse(referenceSignal, permutations[i]);
-			ccResults[i] = pResults;
-		}
-		Mean m = new Mean();
-		double mean = m.evaluate(ccResults);
-		Variance variance = new Variance();
-		double var = variance.evaluate(ccResults);
-		double std = Math.sqrt(var);
-		if (Config.USE_INPUTSIGNAL_EWMA) {
-			inputSignal = getEWMA(inputSignal, inputEWMA);
-		}
-//	    double actualCC = pmcc(referenceSignal, inputSignal);
-		double actualCC = zbsse(referenceSignal, inputSignal);
-		double score = (actualCC - mean) / std;
-		Kurtosis kurtosis = new Kurtosis();
-		double kurt = kurtosis.evaluate(ccResults);
-//		System.out.println("score: " + score + " kurt: " + kurt + " var: " + var + " mean: " + mean + " actual: " + actualCC);
-		return score;
-	}
-
-	private double permutationEvaluateCluster(double[] inputTimes, double[] inputSignal, int N) {
-		if (inputTimes.length != inputSignal.length) {
-			System.out.println("inputTimes and inputSignal are not equal");
-			return 0;
-		}
-		double[] ccResults = new double[N];
-		double[] is = new double[inputTimes.length];
-		for (int i = 0; i < is.length; i++) {
-			is[i] = i;
-		}
-		double[][] permutations = generateRandomPermutations(is, N);
-		for (int i = 0; i < N; i++) {
-		    double[] permutedIndicies = permutations[i];
-		    double[] permutedSignal = new double[permutedIndicies.length];
-		    for (int j = 0; j < permutedIndicies.length; j++) {
-		    	int pi = (int) permutedIndicies[j];
-		    	permutedSignal[j] = inputSignal[pi];
-			}
-			double pResult = zbsigncluster(inputTimes, permutedSignal);
-		    ccResults[i] = pResult;
-		}
-		Mean m = new Mean();
-		double mean = m.evaluate(ccResults);
-		Variance variance = new Variance();
-		double var = variance.evaluate(ccResults);
-		double std = Math.sqrt(var);
-		double actualCC = zbsigncluster(inputTimes, inputSignal);
-		double score = (actualCC - mean) / std;
-		Kurtosis kurtosis = new Kurtosis();
-		double kurt = kurtosis.evaluate(ccResults);
-		System.out.println("score: " + score + " kurt: " + kurt + " var: " + var + " mean: " + mean + " actual: " + actualCC);
-		return score;
-	}
-
-	private double permutationEvaluateSnrCC(double[] referenceSignal, double[] inputSignal, int N) {
-		double[] ccResults = new double[N];
-		double[][] permutations = generateRandomPermutations(inputSignal, N);
-		for (int i = 0; i < N; i++) {
-			if (Config.USE_INPUTSIGNAL_EWMA) {
-				permutations[i] = getEWMA(permutations[i], inputEWMA);
-			}
-//	        double pResults = pmcc(referenceSignal, permutations[i]);
-			double pResults = zbsnr(referenceSignal, permutations[i]);
-			ccResults[i] = pResults;
-		}
-		Mean m = new Mean();
-		double mean = m.evaluate(ccResults);
-		Variance variance = new Variance();
-		double var = variance.evaluate(ccResults);
-		double std = Math.sqrt(var);
-		if (Config.USE_INPUTSIGNAL_EWMA) {
-			inputSignal = getEWMA(inputSignal, inputEWMA);
-		}
-//	    double actualCC = pmcc(referenceSignal, inputSignal);
-		double actualCC = zbccsnr(referenceSignal, inputSignal);
-		double score = (actualCC - mean) / std;
-		Kurtosis kurtosis = new Kurtosis();
-		double kurt = kurtosis.evaluate(ccResults);
-//		System.out.println("score: " + score + " kurt: " + kurt + " var: " + var + " mean: " + mean + " actual: " + actualCC);
-		return score;
-	}
-
-	private double permutationEvaluateCC(double[] referenceSignal, double[] inputSignal, int N) {
-		double[] ccResults = new double[N];
-		double[][] permutations = generateRandomPermutations(inputSignal, N);
-		for (int i = 0; i < N; i++) {
-			if (Config.USE_INPUTSIGNAL_EWMA) {
-				permutations[i] = getEWMA(permutations[i], inputEWMA);
-			}
-//	        double pResults = pmcc(referenceSignal, permutations[i]);
-			double pResults = zbsnr(referenceSignal, permutations[i]);
-			ccResults[i] = pResults;
-		}
-		Mean m = new Mean();
-		double mean = m.evaluate(ccResults);
-		Variance variance = new Variance();
-		double var = variance.evaluate(ccResults);
-		double std = Math.sqrt(var);
-		if (Config.USE_INPUTSIGNAL_EWMA) {
-			inputSignal = getEWMA(inputSignal, inputEWMA);
-		}
-	    double actualCC = pmcc(referenceSignal, inputSignal);
-//		double actualCC = zbsnr(referenceSignal, inputSignal);
-		double score = (actualCC - mean) / std;
-//		score /= 30;
-		Kurtosis kurtosis = new Kurtosis();
-		double kurt = kurtosis.evaluate(ccResults);
-//		System.out.println("score: " + score + " kurt: " + kurt + " var: " + var + " mean: " + mean + " actual: " + actualCC);
-		return score;
-	}
-
 	private double angleBetween(Vector a, Vector b) {
 		return Math.acos(clipValue((a.dotProduct(b)) / (a.getNorm() * b.getNorm()), -1.0, 1.0));
 	}
@@ -723,87 +522,11 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 		}
 	}
 
-	private double findLagTime() {
-
-//		double firstLeftFlashTime = leftSyncs.get(leftSyncs.size()-2);
-//		double secondLeftFlashTime = leftSyncs.get(leftSyncs.size()-1);
-//		double rightFlashTime = rightSyncs.get(rightSyncs.size()-1);
-//
-//
-//		double l1 = projectLeftVectorTimestamp - firstLeftFlashTime;
-//		double l2 = projectRightVectorTimestamp - rightFlashTime;
-////
-//		double r1 = rightFlashTime - projectLeftVectorTimestamp;
-//		double r2 = secondLeftFlashTime - projectRightVectorTimestamp;
-//
-////		System.out.println(l1 + "," + l2 + "," + r1 + "," + r2);
-//
-////		System.out.println("fl" + " " + firstLeftFlashTime + " sl " + secondLeftFlashTime + " r " + rightFlashTime + " pl " + projectLeftVectorTimestamp + " pr " + projectRightVectorTimestamp);
-//
-//		double leftDifferences = (l1 + l2)/2;
-//		double rightDifferences = (r1 + r2)/2;
-//
-////		System.out.println(Math.abs(leftDifferences) >= Math.abs(rightDifferences));
-//
-////		System.out.println(Math.abs(leftDifferences) + "," + Math.abs(rightDifferences));
-//
-//		System.out.println("ld " + leftDifferences + " rd " + rightDifferences);
-//
-//		return 0;
-		double leftFlashTime = leftSyncs.get(leftSyncs.size() - 1);
-		double rightFlashTime = rightSyncs.get(rightSyncs.size() - 1);
-		if (leftFlashTime > rightFlashTime) {
-			double leftDiff = projectLeftVectorTimestamp - rightFlashTime;
-			double rightDiff = projectRightVectorTimestamp - rightFlashTime;
-
-			if (leftDiff > rightDiff) {
-//				System.out.println("leftDiff");
-				return leftDiff;
-			} else {
-//				System.out.println("rightDiff");
-				return rightDiff;
-			}
-		}
-		return 0;
-	}
-
-
-
 	public double[] generateReferenceSignal(double[] x, double signalPeriod, double offset) {
 		double[] signalValues = new double[x.length];
 		double twoPiOverPeriod = TWO_PI / signalPeriod;
 		for (int i = 0; i < x.length; i++) {
 			signalValues[i] = 10 * Math.sin(twoPiOverPeriod * x[i] + (ARCSIN_ONE - twoPiOverPeriod * offset));
-		}
-		return signalValues;
-	}
-
-	private double[] generateCosReferenceSignal(double[] x, double signalPeriod, double offset) {
-		double[] signalValues = new double[x.length];
-		double twoPiOverPeriod = TWO_PI / signalPeriod;
-		for (int i = 0; i < x.length; i++) {
-			signalValues[i] = 10 * Math.cos(twoPiOverPeriod * x[i] + (ARCSIN_ONE - twoPiOverPeriod * offset));
-		}
-		return signalValues;
-	}
-
-	public double[] generateProjectedReferenceSignal(double[] x, double signalPeriod, double offset) {
-		double[] signalValues = new double[x.length];
-		double twoPiOverPeriod = TWO_PI / signalPeriod;
-		for (int i = 0; i < x.length; i++) {
-			double t = x[i];
-			double originalValue = Math.sin(twoPiOverPeriod * t + (ARCSIN_ONE - twoPiOverPeriod * offset));
-			boolean lastLeft = (int) (Math.floor((t - offset) / (signalPeriod / 2))) % 2 == 0;
-			signalValues[i] = deltaSpaceTransform(new Vector3D(1, 0, 0), new Vector3D(-1, 0, 0), new Vector3D(originalValue, 0, 0), lastLeft);
-		}
-		return signalValues;
-	}
-
-	public double[] generateNoiseSignal(double[] x, double min, double max) {
-		Random r = new Random();
-		double[] signalValues = new double[x.length];
-		for (int i = 0; i < x.length; i++) {
-			signalValues[i] = min + (max - min) * r.nextDouble();
 		}
 		return signalValues;
 	}
@@ -859,26 +582,6 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 		return x * x;
 	}
 
-	private void fftAutoCorrelation(double [] x, double [] ac) {
-		int n = x.length;
-		// Assumes n is even.
-		DoubleFFT_1D fft = new DoubleFFT_1D(n);
-		fft.realForward(x);
-		ac[0] = sqr(x[0]);
-		// ac[0] = 0;  // For statistical convention, zero out the mean
-		ac[1] = sqr(x[1]);
-		for (int i = 2; i < n; i += 2) {
-			ac[i] = sqr(x[i]) + sqr(x[i+1]);
-			ac[i+1] = 0;
-		}
-		DoubleFFT_1D ifft = new DoubleFFT_1D(n);
-		ifft.realInverse(ac, true);
-		// For statistical convention, normalize by dividing through with variance
-		//for (int i = 1; i < n; i++)
-		//    ac[i] /= ac[0];
-		//ac[0] = 1;
-	}
-
 	private double[] autocorrelation(double[] x) {
 		double[] ac = new double[x.length];
 //		fftAutoCorrelation(x, ac);
@@ -892,193 +595,6 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 		return correlationCoefficient;
 	}
 
-	private double zbsigncluster(double[] t, double[] x) {
-		List<Double> positiveTimes = new ArrayList<>();
-		List<Double> negativeTimes = new ArrayList<>();
-		for (int i = 0; i < t.length; i++) {
-			if (x[i] >= 0) {
-				positiveTimes.add(t[i]);
-			} else {
-				negativeTimes.add(t[i]);
-			}
-		}
-		double[] positiveTimesA = new double[positiveTimes.size()];
-		double[] negativeTimesA = new double[negativeTimes.size()];
-		for (int i = 0; i < positiveTimes.size(); i++) {
-			positiveTimesA[i] = positiveTimes.get(i);
-		}
-		for (int i = 0; i < negativeTimes.size(); i++) {
-			negativeTimesA[i] = negativeTimes.get(i);
-		}
-//		System.out.println("pt: " + positiveTimes.size() + " nt: " + negativeTimes.size());
-		Mean m = new Mean();
-		double averagePositiveTime = m.evaluate(positiveTimesA);
-		double averageNegativeTime = m.evaluate(negativeTimesA);
-		double averageTimeDifference = averageNegativeTime - averagePositiveTime;
-		return averageTimeDifference;
-	}
-
-	private double zbsnr(double[] xArray, double[] yArray) {
-	    double[] totalSignal = yArray;
-	    double[] actualSignal = xArray;
-	    double xmin = xArray[0];
-	    double xmax = xArray[0];
-	    for (int i = 0; i < xArray.length; i++) {
-	        if (xArray[i] < xmin) {
-	            xmin = xArray[i];
-            }
-            if (xArray[i] > xmax) {
-	            xmax = xArray[i];
-            }
-        }
-
-        double xAmp = xmax - xmin;
-	    List<Double> tHighs = new ArrayList<>();
-	    List<Double> tLows = new ArrayList<>();
-	    for (int i = 0; i < xArray.length; i++) {
-	        if (xArray[i] == xmin) {
-	            tLows.add(yArray[i]);
-            }
-            if (xArray[i] == xmax) {
-	            tHighs.add(yArray[i]);
-            }
-        }
-        double[] tHighA = new double[tHighs.size()];
-	    double[] tLowA = new double[tLows.size()];
-	    for (int i = 0; i < tHighs.size(); i++) {
-	        tHighA[i] = tHighs.get(i);
-        }
-        for (int i = 0; i < tLows.size(); i++) {
-	        tLowA[i] = tLows.get(i);
-        }
-        Mean m = new Mean();
-	    double tAmp = Math.abs(m.evaluate(tHighA) - m.evaluate(tLowA));
-//        double tAmp = vectorLength;
-//		System.out.println("tAmp: " + tAmp + " vtAmp: " + vtAmp);
-	    double scale = tAmp / xAmp;
-	    for (int i = 0; i < actualSignal.length; i++) {
-	        actualSignal[i] *= scale;
-        }
-	    double[] noiseSignal = new double[yArray.length];
-	    for (int i = 0; i < totalSignal.length; i++) {
-	        noiseSignal[i] = totalSignal[i] - actualSignal[i];
-        }
-        Variance var = new Variance();
-	    double signalVariance = var.evaluate(actualSignal);
-	    double noiseVariance = var.evaluate(noiseSignal);
-	    double noiseCC = pmcc(actualSignal, noiseSignal);
-//	    System.out.println("nsc: " + pmcc(actualSignal, noiseSignal));
-//	    double snr = signalVariance / noiseVariance * (1 - Math.min(0, noiseCC));
-        double snr = signalVariance / noiseVariance;
-//        double snr = pmcc(xArray, yArray) / pmcc(xArray, noiseSignal);
-//		snr /= 4;
-	    return snr;
-    }
-
-	private double zbsse(double[] xArray, double[] yArray) {
-		double[] totalSignal = yArray;
-		double[] actualSignal = xArray;
-		double xmin = xArray[0];
-		double xmax = xArray[0];
-		for (int i = 0; i < xArray.length; i++) {
-			if (xArray[i] < xmin) {
-				xmin = xArray[i];
-			}
-			if (xArray[i] > xmax) {
-				xmax = xArray[i];
-			}
-		}
-
-		double xAmp = xmax - xmin;
-		List<Double> tHighs = new ArrayList<>();
-		List<Double> tLows = new ArrayList<>();
-		for (int i = 0; i < xArray.length; i++) {
-			if (xArray[i] == xmin) {
-				tLows.add(yArray[i]);
-			}
-			if (xArray[i] == xmax) {
-				tHighs.add(yArray[i]);
-			}
-		}
-		double[] tHighA = new double[tHighs.size()];
-		double[] tLowA = new double[tLows.size()];
-		for (int i = 0; i < tHighs.size(); i++) {
-			tHighA[i] = tHighs.get(i);
-		}
-		for (int i = 0; i < tLows.size(); i++) {
-			tLowA[i] = tLows.get(i);
-		}
-		Mean m = new Mean();
-		double tAmp = Math.abs(m.evaluate(tHighA) - m.evaluate(tLowA));
-//		double tAmp = vectorLength;
-//		System.out.println("tAmp: " + tAmp + " vtAmp: " + vtAmp);
-		double scale = tAmp / xAmp;
-		for (int i = 0; i < actualSignal.length; i++) {
-			actualSignal[i] *= scale;
-		}
-		double sse = 0;
-		for (int i = 0; i < actualSignal.length; i++) {
-			double error = (actualSignal[i] - totalSignal[i]) * (actualSignal[i] - totalSignal[i]);
-			sse += error;
-		}
-		return sse;
-	}
-
-	private double zbccsnr(double[] xArray, double[] yArray) {
-		double[] totalSignal = yArray;
-		double[] actualSignal = xArray;
-		double xmin = xArray[0];
-		double xmax = xArray[0];
-		for (int i = 0; i < xArray.length; i++) {
-			if (xArray[i] < xmin) {
-				xmin = xArray[i];
-			}
-			if (xArray[i] > xmax) {
-				xmax = xArray[i];
-			}
-		}
-
-		double xAmp = xmax - xmin;
-		List<Double> tHighs = new ArrayList<>();
-		List<Double> tLows = new ArrayList<>();
-		for (int i = 0; i < xArray.length; i++) {
-			if (xArray[i] == xmin) {
-				tLows.add(yArray[i]);
-			}
-			if (xArray[i] == xmax) {
-				tHighs.add(yArray[i]);
-			}
-		}
-		double[] tHighA = new double[tHighs.size()];
-		double[] tLowA = new double[tLows.size()];
-		for (int i = 0; i < tHighs.size(); i++) {
-			tHighA[i] = tHighs.get(i);
-		}
-		for (int i = 0; i < tLows.size(); i++) {
-			tLowA[i] = tLows.get(i);
-		}
-		Mean m = new Mean();
-//	    double tAmp = Math.abs(m.evaluate(tHighA) - m.evaluate(tLowA));
-		double tAmp = vectorLength;
-//	    System.out.println("tAmp: " + tAmp);
-		double scale = tAmp / xAmp;
-		for (int i = 0; i < actualSignal.length; i++) {
-			actualSignal[i] *= scale;
-		}
-		double[] noiseSignal = new double[yArray.length];
-		for (int i = 0; i < totalSignal.length; i++) {
-			noiseSignal[i] = totalSignal[i] - actualSignal[i];
-		}
-		double totalCorr = pmcc(actualSignal, totalSignal);
-		double noiseCorr = pmcc(actualSignal, noiseSignal);
-//		System.out.println("tc: " + totalCorr + " nc: " + noiseCorr);
-//		double snr = totalCorr / noiseCorr;
-        double snr = totalCorr - Math.abs(noiseCorr);
-//        System.out.println("snr: " + snr);
-//		snr /= 2;
-		return snr;
-	}
-
 	private double detectSync(double[] windowTimes, double[][] windowValues, double signalPeriod, double offset) {
 
 		// Feature calculation
@@ -1090,12 +606,12 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 			} else {
 				Vector windowVector;
 				windowVector = new Vector3D(windowValues[i]);
-//				double featureValue = deltaSpaceTransform(lV, rV, windowVector, lastLeft);
-//				double featureValue = deltaSpaceMeanTransform(lV, rV, windowVector, lastLeft);
 				double featureValue = deltaProjectTransform(projectLeftVector, projectRightVector, projectMeanVector, windowVector);
 				double syncThresholdValue = deltaVectorThreshold(projectLeftVector, projectRightVector, projectMeanVector);
 				featureMap.put(featureKey, featureValue);
-				syncThresholdMap.put(featureKey, ""+syncThresholdValue);
+				if (keepData) {
+					syncThresholdMap.put(featureKey, "" + syncThresholdValue);
+				}
 				featureSignal[i] = featureValue;
 			}
 		}
@@ -1158,9 +674,10 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 //		double lagTime = findLagTime();
 
 		// Adds all lag data to lag map
-		lagMap.put(windowTimes[windowTimes.length - 1], "" + lagFactor + "," + lagTime);
-		lagTimeMap.put(windowTimes[windowTimes.length - 1], lagTime);
-
+		if (keepData) {
+			lagMap.put(windowTimes[windowTimes.length - 1], "" + lagFactor + "," + lagTime);
+		}
+        lagTimeMap.put(windowTimes[windowTimes.length - 1], lagTime);
 //		lagMap.put(windowTimes[windowTimes.length - 1], "" + lagFactor + "," + lagTimeXcorr);
 
 		// Shift the adjusted signal (or not)
@@ -1180,7 +697,9 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 		}
 
 		// Adds all data to reference map
-		windowsMap.put(windowTimes[windowTimes.length - 1], windowResults);
+		if (keepData) {
+			windowsMap.put(windowTimes[windowTimes.length - 1], windowResults);
+		}
 
 		// Smoothing the signal
 		if (Config.USE_INPUTSIGNAL_EWMA) {
@@ -1346,28 +865,6 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 	public String detectDirection(Tuple2<double[]> data) {
 		return null;
 	}
-
-//	public void reset() {
-//		windowVectors.clear();
-//		projectMeanVector = null;
-//		projectLeftVector = null;
-//		projectRightVector = null;
-//		sensorTimes.clear();
-//		sensorWindow.clear();
-//		nextLefts.clear();
-//		nextRights.clear();
-//		leftSyncs.clear();
-//		rightSyncs.clear();
-//		leftSynced = false;
-//		rightSynced = false;
-//		dataBuffer.clear();
-//		featureMap.clear();
-//		correlationMap.clear();
-//		lagMap.clear();
-//		subsampleMap.clear();
-//		windowsMap.clear();
-//		if (debugMode) System.out.println("db s" + "" + dataBuffer.size());
-//	}
 
 	public Map<Double, Double> getFeatureMap() {
 		return featureMap;

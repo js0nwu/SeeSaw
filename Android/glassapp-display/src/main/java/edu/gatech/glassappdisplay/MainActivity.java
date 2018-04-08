@@ -3,8 +3,7 @@ package edu.gatech.glassappdisplay;
 import android.os.*;
 import android.os.Process;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.WindowManager;
+import android.view.*;
 import android.widget.Toast;
 import com.google.android.glass.media.Sounds;
 import com.google.android.glass.widget.CardBuilder;
@@ -14,14 +13,13 @@ import com.google.android.glass.widget.CardScrollView;
 import android.app.Activity;
 import android.content.Context;
 import android.media.AudioManager;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.util.Random;
 
 /**
  * An {@link Activity} showing a tuggable "Hello World!" card.
@@ -55,10 +53,53 @@ public class MainActivity extends Activity {
     private byte[] receiveData = new byte[PACKETSIZE];
     private DatagramPacket datagramPacket = null;
 
+    private int syncNumber = 0;
+
+    private AudioManager mAudioManager = null;
+
+    private long startTime = 0;
+
+    private class HideRunnable implements Runnable {
+
+        private int sNumber;
+
+        public HideRunnable(int sNumber) {
+            this.sNumber = sNumber;
+        }
+
+        @Override
+        public void run() {
+            if (!pollCommands) {
+                return;
+            }
+            if (syncNumber > sNumber) {
+                return;
+            }
+            if (!sView.getShowNotif()) {
+                return;
+            }
+            long elapsedTime = System.currentTimeMillis() - startTime;
+            Toast.makeText(getApplicationContext(), "Missed " + syncNumber + " : " + elapsedTime, Toast.LENGTH_SHORT).show();
+            syncNumber++;
+            sView.setShowNotif(false);
+            notificationHandler.postDelayed(notificationRunnable, getPoissonRandom((notificationDelay / 1000)));
+        }
+    }
+
     private Runnable acceptRunnable = new Runnable() {
         @Override
         public void run() {
-            Toast.makeText(getApplicationContext(), "Accept", Toast.LENGTH_LONG).show();
+            if (!pollCommands) {
+                return;
+            }
+            if (!sView.getShowNotif()) {
+                return;
+            }
+            long elapsedTime = System.currentTimeMillis() - startTime;
+            Toast.makeText(getApplicationContext(), "Dismissed " + syncNumber + " : " + elapsedTime, Toast.LENGTH_SHORT).show();
+            syncNumber++;
+            sView.setShowNotif(false);
+            notificationHandler.postDelayed(notificationRunnable, getPoissonRandom((notificationDelay / 1000)));
         }
     };
 
@@ -66,14 +107,51 @@ public class MainActivity extends Activity {
         runOnUiThread(acceptRunnable);
     }
 
+    private Handler notificationHandler = new Handler();
+
+    private Runnable notificationRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Log.v("nr", "nr");
+
+            if (!pollCommands) {
+                return;
+            }
+            if (mAudioManager != null) {
+                mAudioManager.playSoundEffect(Sounds.SUCCESS);
+            }
+
+            startTime = System.currentTimeMillis();
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    sView.setShowNotif(true);
+                }
+            });
+            Log.v("nhPost", "syncNumber " + syncNumber);
+            notificationHandler.postDelayed(new HideRunnable(syncNumber), notificationTime);
+        }
+    };
+
+    private long notificationDelay = 10000;
+    private long notificationTime = 10000;
+
     @Override
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 //        mView = buildView();
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
                 .permitAll().build();
         StrictMode.setThreadPolicy(policy);
+
+        mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+
+
         flashUIThread = new HandlerThread("FlashUI", Process.THREAD_PRIORITY_FOREGROUND);
         flashUIThread.start();
         flashUIHandler = new Handler(flashUIThread.getLooper());
@@ -121,18 +199,48 @@ public class MainActivity extends Activity {
             }
         });
         setContentView(mCardScroller);
+
+        notificationHandler.postDelayed(notificationRunnable, notificationTime);
+//        runAccept();
+    }
+
+    private void closeSocket() {
+        if (datagramSocket != null) {
+            if (datagramSocket.isConnected()) {
+                datagramSocket.disconnect();
+            }
+            if (!datagramSocket.isClosed()) {
+                datagramSocket.close();
+            }
+        }
+    }
+
+    public static int getPoissonRandom(double seconds) {
+        Random r = new Random();
+        double L = Math.exp(-seconds);
+        int k = 0;
+        double p = 1.0;
+        do {
+            p = p * r.nextDouble();
+            k++;
+        } while (p > L);
+        return (k - 1) * 1000;
+    }
+
+    private void initSocket() {
+        closeSocket();
         try {
             datagramSocket = new DatagramSocket(5001);
         } catch (SocketException e) {
             e.printStackTrace();
         }
         datagramPacket = new DatagramPacket(receiveData, receiveData.length);
-//        runAccept();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        initSocket();
         mCardScroller.activate();
         pollCommands = true;
         pollThread = new Thread(new Runnable() {
@@ -140,8 +248,7 @@ public class MainActivity extends Activity {
             public void run() {
                 while (pollCommands) {
                     if (datagramSocket == null) {
-                        pollCommands = false;
-                        break;
+                        initSocket();
                     }
                     try {
                         datagramSocket.receive(datagramPacket);
@@ -151,6 +258,7 @@ public class MainActivity extends Activity {
                             runAccept();
                         }
                     } catch (IOException e) {
+                        initSocket();
                         e.printStackTrace();
                     }
                 }
@@ -162,10 +270,11 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        closeSocket();
+        pollCommands = false;
         mCardScroller.deactivate();
         flashUIHandler.removeCallbacks(null);
         flashUIThread.quit();
-        pollCommands = false;
         if (pollThread != null) {
             pollThread.interrupt();
             try {
@@ -213,6 +322,9 @@ public class MainActivity extends Activity {
 
         @Override
         public void run() {
+            if (!pollCommands) {
+                return;
+            }
             long lastTime = startTime;
             long currentTime = 0;
 //            for (int i = 0; i < Config.NUM_CYCLES * 2; i++) {

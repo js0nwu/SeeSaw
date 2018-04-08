@@ -2,10 +2,7 @@ package edu.gatech.glassappdisplay;
 
 
 import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.RectF;
+import android.graphics.*;
 import android.os.Vibrator;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -29,6 +26,10 @@ public class SynchroView extends View {
     private double gyroDraw = 0;
     private long lastCross = 0;
 
+    private boolean showNotif = false;
+
+    private boolean peripheral = true;
+
     public SynchroView(Context context, AttributeSet attrs) {
         super(context, attrs);
         initView();
@@ -37,6 +38,14 @@ public class SynchroView extends View {
     public void setGyroDraw(double value) {
         Log.d("setGyroDraw", "" + value);
         gyroDraw = value;
+    }
+
+    public void setShowNotif(boolean notif) {
+        showNotif = notif;
+    }
+
+    public boolean getShowNotif() {
+        return showNotif;
     }
 
     private void initView() {
@@ -147,10 +156,34 @@ public class SynchroView extends View {
         super.onDraw(canvas);
         if(debugMode) Log.d(TAG + " drawing", "" + drawLeft + "," + drawRight);
 
-//        canvas.drawColor(Color.BLACK);
+        Paint paint = new Paint();
+        paint.setColor(Color.LTGRAY);
+        paint.setStyle(Paint.Style.FILL);
+        canvas.drawPaint(paint);
 
-        if (drawLeft) canvas.drawOval(leftCircle, leftCirclePaint);
-        if (drawRight) canvas.drawOval(rightCircle, rightCirclePaint);
+        if (showNotif) {
+            if (peripheral) {
+            if (drawLeft) {
+                paint.setColor(Color.RED);
+                canvas.drawPaint(paint);
+            }
+            if (drawRight) {
+                paint.setColor(Color.GREEN);
+                canvas.drawPaint(paint);
+            }
+        }
+            paint.setColor(Color.BLACK);
+            paint.setTextAlign(Paint.Align.CENTER);
+            paint.setTextSize(40);
+            int xPos = (canvas.getWidth() / 2);
+            int yPos = (int) ((canvas.getHeight() / 2) - ((paint.descent() + paint.ascent()) / 2));
+            canvas.drawText("Notification!", xPos, yPos, paint);
 
+            Bitmap b = BitmapFactory.decodeResource(getResources(), R.drawable.bell);
+            canvas.drawBitmap(b, b.getWidth() / 2, canvas.getHeight() / 2 - (b.getHeight() / 2), paint);
+
+            if (drawLeft) canvas.drawOval(leftCircle, leftCirclePaint);
+            if (drawRight) canvas.drawOval(rightCircle, rightCirclePaint);
+        }
     }
 }

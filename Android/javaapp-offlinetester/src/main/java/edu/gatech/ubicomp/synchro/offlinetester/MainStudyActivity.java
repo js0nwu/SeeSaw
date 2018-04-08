@@ -48,7 +48,7 @@ public class MainStudyActivity {
 //        usernameRootFolderMap.put("jwpilly", "/media/jwpilly/PillowDisk/Research/Synchro/synchrowatch/2018-01-10/Synchro/P2/");
 //		usernameRootFolderMap.put("jwpilly", "/home/jwpilly/Downloads/seesaw_data/data1/Synchro");
 //        usernameRootFolderMap.put("jwpilly", "/Users/jwpilly/Desktop/seesaw_data/in-the-wild/Synchro");
-        usernameRootFolderMap.put("jwpilly", "/Users/jwpilly/Desktop/seesaw_data/expert/Synchro");
+        usernameRootFolderMap.put("jwpilly", "/Users/jwpilly/Desktop/seesaw_data/expert_guard/Synchro");
 
 		String username = System.getProperty("user.name");
 		if (username != null && usernameRootFolderMap.containsKey(username))
