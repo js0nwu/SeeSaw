@@ -10,9 +10,10 @@ public class CONSTANTS {
     //    static String IP_ADDRESS = "192.168.1.196";
 
     static int PORT = 12562;
+
     public static final int SENDING_INTERVAL = 0;
 
-    public static final int SENSOR_INTERVAL = 7;
+    public static final int SENSOR_INTERVAL = 0;
 
     public static String getIpAddress() {
         return IP_ADDRESS;
@@ -46,10 +47,15 @@ public class CONSTANTS {
         BYTE_SIZE = byteSize;
     }
 
+    public static int getQueueSize() {
+        return QUEUE_SIZE;
+    }
+
     // variable to share with sending part
     // Gyro Acc, Rotvec
     // 4,4,4, 4,4,4, 4,4,4,4 8
-    static int BYTE_SIZE = 48;
+    public static int BYTE_SIZE = 48;
+    public static int QUEUE_SIZE = 10;
 
 
 

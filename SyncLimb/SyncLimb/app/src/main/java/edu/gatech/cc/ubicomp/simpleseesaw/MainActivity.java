@@ -51,6 +51,8 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
     TwoFingersDoubleTapDetector twoFingersListener;
 
+    private int sensor_interval = CONSTANTS.getSensorInterval();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,15 +60,15 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
-        sensorManager.registerListener(this,
-                sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR),
-                SensorManager.SENSOR_DELAY_FASTEST);
+//        sensorManager.registerListener(this,
+//                sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR),
+//                SensorManager.SENSOR_DELAY_FASTEST);
         sensorManager.registerListener(this,
                 sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE),
                 SensorManager.SENSOR_DELAY_FASTEST);
-        sensorManager.registerListener(this,
-                sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-                SensorManager.SENSOR_DELAY_FASTEST);
+//        sensorManager.registerListener(this,
+//                sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+//                SensorManager.SENSOR_DELAY_FASTEST);
 //        sensorManager.registerListener(this,
 //                sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE),
 //                1);
@@ -89,7 +91,11 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
         // store float values as byte array
         msgBuffer = ByteBuffer.allocate(CONSTANTS.getByteSize());
-        bufferQueue = new ArrayBlockingQueue(5);
+        msgBuffer.putFloat(24,0);
+        msgBuffer.putFloat(28, 0);
+        msgBuffer.putFloat(32, 0);
+        msgBuffer.putFloat(36, 0);
+        bufferQueue = new ArrayBlockingQueue(CONSTANTS.getQueueSize());
 
         // Enables Always-on
         setAmbientEnabled();
@@ -226,9 +232,9 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         // TYPE_GYROSCOPE
         if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
 
-            if(msgSending && ( (event.timestamp - lastSensorTime) > CONSTANTS.SENSOR_INTERVAL)){
+            if(msgSending && ( (event.timestamp - lastSensorTime) > sensor_interval)){
 //                Log.d("sensorUpdated", ""+event.timestamp + "|" +lastSensorTime +"="+(event.timestamp - lastSensorTime));
-                lastSensorTime = event.timestamp;
+
 
                 msgBuffer.putFloat(0, event.values[0]);
                 msgBuffer.putFloat(4, event.values[1]);
@@ -240,6 +246,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                         bufferQueue.take();
                     }
                     bufferQueue.put(msgBuffer);
+                    lastSensorTime = event.timestamp;
 //                    Log.d("sensorUpdated", "DATA put "+event.timestamp);
                 } catch (InterruptedException ex) {
                     Log.d("sensorUpdated", "Error on put");

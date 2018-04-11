@@ -62,13 +62,15 @@ public class MainActivity extends Activity implements SensorEventListener {
     private Boolean msgWriting = false;
     ConnectServer sendToServer;
 
+    private int sensor_interval = CONSTANTS.getSensorInterval();
+
     @Override
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
 
         // store float values as byte array
         msgBuffer = ByteBuffer.allocate(CONSTANTS.getByteSize());
-        bufferQueue = new ArrayBlockingQueue(5);
+        bufferQueue = new ArrayBlockingQueue(CONSTANTS.getQueueSize());
 
 //        mView[0] = buildView(0);
 //        mView[1] = buildView(1);
@@ -175,12 +177,12 @@ public class MainActivity extends Activity implements SensorEventListener {
         sensorManager.registerListener(this,
                 sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE),
                 SensorManager.SENSOR_DELAY_FASTEST);
-        sensorManager.registerListener(this,
-                sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-                SensorManager.SENSOR_DELAY_FASTEST);
-        sensorManager.registerListener(this,
-                sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR),
-                SensorManager.SENSOR_DELAY_FASTEST);
+//        sensorManager.registerListener(this,
+//                sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+//                SensorManager.SENSOR_DELAY_FASTEST);
+//        sensorManager.registerListener(this,
+//                sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR),
+//                SensorManager.SENSOR_DELAY_FASTEST);
 
 
         powerManager = (PowerManager) getSystemService(POWER_SERVICE);
@@ -280,7 +282,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 //        Log.d("time", event.timestamp + "|" + System.currentTimeMillis());
         if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
 
-            if(msgSending && ( (event.timestamp - lastSensorTime) > CONSTANTS.SENSOR_INTERVAL)){
+            if(msgSending && ( (event.timestamp - lastSensorTime) > sensor_interval)){
 //                Log.d("sensorUpdated", ""+event.timestamp + "|" +lastSensorTime +"="+(event.timestamp - lastSensorTime));
                 lastSensorTime = event.timestamp;
 

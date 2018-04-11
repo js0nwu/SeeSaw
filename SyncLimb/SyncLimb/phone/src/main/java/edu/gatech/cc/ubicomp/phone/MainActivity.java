@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         // store float values as byte array
         msgBuffer = ByteBuffer.allocate(CONSTANTS.getByteSize());
-        bufferQueue = new ArrayBlockingQueue(5);
+        bufferQueue = new ArrayBlockingQueue(CONSTANTS.getQueueSize());
 
         powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,

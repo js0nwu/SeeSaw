@@ -147,6 +147,8 @@ public class ConnectServer extends AsyncTask<Void, Void, Void> {
             int interval = CONSTANTS.SENDING_INTERVAL;
             String one_line = "";
             Log.d("sendToServer", "loop starting");
+
+            long last_time = 0;
             while (this.isSending || this.isWriting) {
                 //String str = new String(msgBuffer.array());
                 start_t = System.currentTimeMillis();
@@ -155,11 +157,15 @@ public class ConnectServer extends AsyncTask<Void, Void, Void> {
                 try {
                     while (bufferQueue.size() > 0) {
                         msgBuffer = (ByteBuffer) bufferQueue.take();
-                        
+                        if(last_time == msgBuffer.getLong(40))
+                            continue;
+
+
                         if (this.isSending) {
-							DatagramPacket pkt = new DatagramPacket(msgBuffer.array(),
-                                msgBuffer.capacity(),
-                                IPAddress, PORT);
+                            DatagramPacket pkt = new DatagramPacket(msgBuffer.array(),
+                                    msgBuffer.capacity(),
+                                    IPAddress, PORT);
+
                             socket.send(pkt);
                         }
                         if (this.isWriting) {
@@ -202,6 +208,8 @@ public class ConnectServer extends AsyncTask<Void, Void, Void> {
                                 Log.d("sendToServer", "created new file for divide saving");
                             }
                         }
+
+                        last_time = msgBuffer.getLong(40);
                     }
                 } catch (InterruptedException ex) {
                     Log.d("sendToServer", "Error on take");
