@@ -15,10 +15,15 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.widget.AdapterView;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Random;
 
 /**
@@ -59,6 +64,11 @@ public class MainActivity extends Activity {
 
     private long startTime = 0;
 
+    private String baseDir = null;
+    private File saveDir = null;
+
+    private ArrayList<String> writeData = new ArrayList<String>();
+
     private class HideRunnable implements Runnable {
 
         private int sNumber;
@@ -80,9 +90,10 @@ public class MainActivity extends Activity {
             }
             long elapsedTime = System.currentTimeMillis() - startTime;
             Toast.makeText(getApplicationContext(), "Missed " + syncNumber + " : " + elapsedTime, Toast.LENGTH_SHORT).show();
+            writeData.add("" + System.currentTimeMillis() + ",missed," + syncNumber + "," + elapsedTime);
             syncNumber++;
             sView.setShowNotif(false);
-            notificationHandler.postDelayed(notificationRunnable, getPoissonRandom((notificationDelay / 1000)));
+            notificationHandler.postDelayed(notificationRunnable, getPoissonRandom((Config.NOTIF_DELAY / 1000)));
         }
     }
 
@@ -97,9 +108,10 @@ public class MainActivity extends Activity {
             }
             long elapsedTime = System.currentTimeMillis() - startTime;
             Toast.makeText(getApplicationContext(), "Dismissed " + syncNumber + " : " + elapsedTime, Toast.LENGTH_SHORT).show();
+            writeData.add("" + System.currentTimeMillis() + ",dismissed," + syncNumber + "," + elapsedTime);
             syncNumber++;
             sView.setShowNotif(false);
-            notificationHandler.postDelayed(notificationRunnable, getPoissonRandom((notificationDelay / 1000)));
+            notificationHandler.postDelayed(notificationRunnable, getPoissonRandom((Config.NOTIF_DELAY / 1000)));
         }
     };
 
@@ -107,13 +119,56 @@ public class MainActivity extends Activity {
         runOnUiThread(acceptRunnable);
     }
 
+    private class SaveOutputTask extends AsyncTask<Void, Void, Boolean> {
+
+        protected Boolean doInBackground(Void... voids) {
+            if (writeData.size() == 0) {
+                return true;
+            }
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+            Date today = Calendar.getInstance().getTime();
+            String reportDate = df.format(today);
+            File outputFile = new File(baseDir, reportDate + ".csv");
+            ArrayList<String> writeDataCopy = new ArrayList<String>(writeData);
+            FileOutputStream fos = null;
+            try {
+                fos = new FileOutputStream(outputFile);
+                BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
+                for (String line : writeDataCopy) {
+                    bw.write(line);
+                    bw.newLine();
+                }
+                bw.close();
+                fos.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            writeData.clear();
+            return true;
+        }
+
+        protected void onPostExecute(Boolean result) {
+            Log.d("SaveOutputTask", "completed save output data " + result);
+        }
+    }
+
     private Handler notificationHandler = new Handler();
 
     private Runnable notificationRunnable = new Runnable() {
         @Override
         public void run() {
+            if (syncNumber >= Config.SYNC_NUM) {
+                writeData.add("" + System.currentTimeMillis() + ",finish");
+            }
+            new SaveOutputTask().execute();
+            if (syncNumber >= Config.SYNC_NUM) {
+                Toast.makeText(getApplicationContext(), "Finished!", Toast.LENGTH_LONG).show();
+                pollCommands = false;
+                pollThread.interrupt();
+                finish();
+                return;
+            }
             Log.v("nr", "nr");
-
             if (!pollCommands) {
                 return;
             }
@@ -122,7 +177,7 @@ public class MainActivity extends Activity {
             }
 
             startTime = System.currentTimeMillis();
-
+            writeData.add("" + startTime + ",show");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -130,12 +185,10 @@ public class MainActivity extends Activity {
                 }
             });
             Log.v("nhPost", "syncNumber " + syncNumber);
-            notificationHandler.postDelayed(new HideRunnable(syncNumber), notificationTime);
+            notificationHandler.postDelayed(new HideRunnable(syncNumber), Config.NOTIF_TIME);
         }
     };
 
-    private long notificationDelay = 10000;
-    private long notificationTime = 10000;
 
     @Override
     protected void onCreate(Bundle bundle) {
@@ -144,19 +197,30 @@ public class MainActivity extends Activity {
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-//        mView = buildView();
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
                 .permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
         mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+        Date today = Calendar.getInstance().getTime();
+        String reportDate = df.format(today);
+        baseDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath()
+                + "/Synchro/" + reportDate + "/";
+        saveDir = new File(baseDir);
+        if (!saveDir.exists()) {
+            Log.v("onCreate", "creating saveDir");
+            saveDir.mkdirs();
+        }
 
         flashUIThread = new HandlerThread("FlashUI", Process.THREAD_PRIORITY_FOREGROUND);
         flashUIThread.start();
         flashUIHandler = new Handler(flashUIThread.getLooper());
 
         flashUIHandler.post(new TickerRunnable(500));
+
+        writeData.add("" + System.currentTimeMillis() + ",start");
 
         mCardScroller = new CardScrollView(this);
         mCardScroller.setAdapter(new CardScrollAdapter() {
@@ -200,8 +264,34 @@ public class MainActivity extends Activity {
         });
         setContentView(mCardScroller);
 
-        notificationHandler.postDelayed(notificationRunnable, notificationTime);
+        notificationHandler.postDelayed(notificationRunnable, Config.NOTIF_TIME);
 //        runAccept();
+
+        initSocket();
+        mCardScroller.activate();
+        pollCommands = true;
+        pollThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (pollCommands) {
+                    if (datagramSocket == null) {
+                        initSocket();
+                    }
+                    try {
+                        datagramSocket.receive(datagramPacket);
+                        String receivedMsg = new String(datagramPacket.getData(), 0, datagramPacket.getLength());
+                        Log.v("receivedMsg", receivedMsg);
+                        if (receivedMsg.equals("accept")) {
+                            runAccept();
+                        }
+                    } catch (IOException e) {
+                        initSocket();
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        pollThread.start();
     }
 
     private void closeSocket() {
@@ -235,41 +325,12 @@ public class MainActivity extends Activity {
             e.printStackTrace();
         }
         datagramPacket = new DatagramPacket(receiveData, receiveData.length);
+        Toast.makeText(getApplicationContext(), "IP: " + Utils.getIPAddress(true), Toast.LENGTH_LONG).show();
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        initSocket();
-        mCardScroller.activate();
-        pollCommands = true;
-        pollThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (pollCommands) {
-                    if (datagramSocket == null) {
-                        initSocket();
-                    }
-                    try {
-                        datagramSocket.receive(datagramPacket);
-                        String receivedMsg = new String(datagramPacket.getData(), 0, datagramPacket.getLength());
-                        Log.v("receivedMsg", receivedMsg);
-                        if (receivedMsg.equals("accept")) {
-                            runAccept();
-                        }
-                    } catch (IOException e) {
-                        initSocket();
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
-        pollThread.start();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onDestroy() {
+        super.onDestroy();
         closeSocket();
         pollCommands = false;
         mCardScroller.deactivate();
@@ -327,7 +388,6 @@ public class MainActivity extends Activity {
             }
             long lastTime = startTime;
             long currentTime = 0;
-//            for (int i = 0; i < Config.NUM_CYCLES * 2; i++) {
             int i = 0;
             while (true) {
                 long nextStartTime = startTime + (periodTime * i);

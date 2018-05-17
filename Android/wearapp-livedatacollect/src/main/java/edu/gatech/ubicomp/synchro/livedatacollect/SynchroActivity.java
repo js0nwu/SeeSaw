@@ -663,7 +663,9 @@ public class SynchroActivity extends Activity implements SensorEventListener {
 		if(debugMode) Log.d(TAG, "closeapp");
         try {
 			isRunning = false;
-			syncDetector.isRunning = false;
+			if (syncDetector != null) {
+				syncDetector.isRunning = false;
+			}
 			flashUIHandler.removeCallbacksAndMessages(null);
 			sensorDataHandler.removeCallbacksAndMessages(null);
 			sensorManager.unregisterListener(this);

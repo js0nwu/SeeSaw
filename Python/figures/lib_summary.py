@@ -332,7 +332,7 @@ def correlateSyncMagFile(filePath, noise=False):
     avg_deltas = np.mean(deltas, axis=0)
     return avg_corrs, avg_deltas
 
-def fpCountFile(filePath, noisewait=10000, synclock=5000):
+def fpCountFile(filePath, noisewait=15000, synclock=0):
     print(filePath)
     thresholds = np.linspace(0.2, 1, 17)
     times = np.linspace(0, 10, 51)
@@ -379,13 +379,13 @@ def fpCountFile(filePath, noisewait=10000, synclock=5000):
             st = df.timestamp.values[0]
             noise_data = df[df.timestamp > st + noisewait]
             # print(noise_data.timestamp.values[0] if len(noise_data) > 0 else "None", st)
-            print(key, len(df), len(noise_data))
             fps = 0
             last_sync = None
             for ni in range(len(noise_data.correlation.values)):
                 if noise_data.correlation.values[ni] > i and (last_sync is None or noise_data.timestamp.values[ni] - last_sync < synclock):
                     fps += 1
                     last_sync = noise_data.timestamp.values[ni]
+            print(len(noise_data), fps)
             outputSet[i] = fps
     return outputSet
 

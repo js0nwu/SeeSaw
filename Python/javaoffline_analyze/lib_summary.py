@@ -332,7 +332,62 @@ def correlateSyncMagFile(filePath, noise=False):
     avg_deltas = np.mean(deltas, axis=0)
     return avg_corrs, avg_deltas
 
+def fpCountFile(filePath, noisewait=30000, synclock=10000):
+    print(filePath)
+    thresholds = np.linspace(0.2, 1, 17)
+    times = np.linspace(0, 10, 51)
+    dataPath = filePath + "/data/"
+    inputPath = dataPath
+    liveCorrDataSet = {}
+    liveRawDataSet = {}
+    liveMagDataSet = {}
+    liveSyncDataSet = {}
+    for root, folders, files in os.walk(inputPath):
+        for f in files:    
+            if f.endswith("corr.csv"):
+                dataFile = inputPath + f[:-4]
+                try:
+                    dataFrame = pd.read_csv(dataFile + ".csv", header=None)
+                    rawDataFrame = pd.read_csv(dataFile.replace("corr", "raw") + ".csv", names=['system_time', 'sensor', 'x', 'y', 'z', 'adjusted_time', 'nano_time', 'linecounter'])
+                    try:
+                        syncDataFrame = pd.read_csv(dataFile.replace("corr", "sync") + ".csv", names=['system_time', 'sync_type', 'adjusted_time', 'correlation', 'linecounter', 'direction'])
+                    except Exception as e:
+                        print("no sync file in " + dataFile)
+                        print(str(e))
+                        syncDataFrame = None
+                except Exception as e2:
+                    print("error in " + dataFile)
+                    print(str(e2))
+                    continue
+                if len(dataFrame) < 1:
+                    continue
+                if(dataFrame.shape[1]==3):
+                    dataFrame.columns = ['timestamp', 'correlation', 'linecounter']
+                elif(dataFrame.shape[1]==4):
+                    dataFrame.columns = ['timestamp', 'correlation', 'linecounter', 'direction']
+                rawDataFrame.columns = ['system_time', 'sensor', 'x', 'y', 'z', 'adjusted_time', 'nano_time', 'linecounter']
+                liveCorrDataSet[f] = dataFrame
+                liveRawDataSet[f] = rawDataFrame
+                liveSyncDataSet[f] = syncDataFrame
+    onlineCorrDataSet = liveCorrDataSet
+    onlineRawDataSet = liveRawDataSet
+    onlineSyncDataSet = liveSyncDataSet
+    outputSet = {}
+    for i in thresholds:
+        for key in onlineCorrDataSet.keys():
+            df = onlineCorrDataSet[key]
+            noise_data = df[df.timestamp > noisewait]
+            fps = 0
+            last_sync = None
+            for ni in range(len(df.correlation.values)):
+                if df.correlation.values[ni] > i and (last_sync is None or df.timestamp.values[ni] - last_sync < synclock):
+                    fps += 1
+                    last_sync = df.timestamp.values[ni]
+            outputSet[i] = fps
+    return outputSet
+
 def syncRateFile(filePath, noise=False, xm=None):
+    print(filePath)
     thresholds = np.linspace(0.2, 1, 17)
     times = np.linspace(0, 10, 51)
     dataPath = filePath + "/data/"

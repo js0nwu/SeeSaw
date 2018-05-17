@@ -20,7 +20,8 @@ ACTIVITY = 'all'
 # baseFilePath = "/home/jwpilly/Downloads/seesaw_data/data1/Synchro/"
 # baseFilePath = "/Users/jwpilly/Desktop/seesaw_data/data1/Synchro/"
 # baseFilePath = "/Users/jwpilly/Desktop/seesaw_data/in-the-wild/Synchro/"
-baseFilePath = "/Users/jwpilly/Desktop/seesaw_data/expert/Synchro/"
+# baseFilePath = "/Users/jwpilly/Desktop/seesaw_data/expert/Synchro/"
+baseFilePath = "/Users/jwpilly/Desktop/study3/data/"
 
 # this block is used to calculate the true positives and false positives of the 3d plots the data is stored in tps and fps
 

@@ -1,12 +1,14 @@
 package edu.gatech.ubicomp.wearappMovement;
 
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.Bundle;
-import android.os.StrictMode;
+import android.os.*;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.wearable.view.WatchViewStub;
 import android.util.Log;
 import android.view.WindowManager;
@@ -18,9 +20,18 @@ import edu.gatech.ubicomp.synchro.detector.*;
 import edu.gatech.ubicomp.movement.R;
 import edu.gatech.ubicomp.synchro.detector.Tuple2;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 
 
 public class MainActivity extends Activity implements SensorEventListener {
@@ -30,9 +41,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     private edu.gatech.ubicomp.wearappMovement.Controller buttonController = new edu.gatech.ubicomp.wearappMovement.Controller("ButtonController");
 
     private SensorManager sensorManager;
-    private Sensor magnetometer;
     private Sensor gyroscope;
-    private Sensor accelerometer;
 
     private double lastSensorTime = 0;
     private double lastConvertedTS = 0;
@@ -45,10 +54,83 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     private final int PACKETSIZE = 36;
 
+    private final int SAVE_INTERVAL = 10000;
+
+    private String baseDir = null;
+    private File saveDir = null;
+    private ArrayList<String> writeData = new ArrayList<>();
+
+    private Handler saveHandler = new Handler();
+
+    private Thread synchroThread = null;
+
+    private boolean saveOutput = true;
+
+    private Runnable saveOutputRunnable = new Runnable() {
+        @Override
+        public void run() {
+            new SaveOutputTask().execute();
+            if (saveOutput) {
+                saveHandler.postDelayed(saveOutputRunnable, SAVE_INTERVAL);
+            }
+        }
+    };
+
+    private class SaveOutputTask extends AsyncTask<Void, Void, Boolean> {
+
+        protected Boolean doInBackground(Void... voids) {
+            if (writeData.size() == 0) {
+                return true;
+            }
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+            Date today = Calendar.getInstance().getTime();
+            String reportDate = df.format(today);
+            File outputFile = new File(baseDir, reportDate + ".csv");
+            ArrayList<String> writeDataCopy = new ArrayList<String>(writeData);
+            FileOutputStream fos = null;
+            try {
+                fos = new FileOutputStream(outputFile);
+                BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
+                for (String line : writeDataCopy) {
+                    bw.write(line);
+                    bw.newLine();
+                }
+                bw.close();
+                fos.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            writeData.clear();
+            return true;
+        }
+
+        protected void onPostExecute(Boolean result) {
+            Log.d("SaveOutputTask", "completed save output data " + result);
+        }
+    }
+
+    private void checkFeaturesAndPermissions() {
+
+        for (String s : Config.APP_PERMISSIONS) {
+            int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), s);
+            if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+                Log.i("location", "no permission");
+                ActivityCompat.requestPermissions(this, Config.APP_PERMISSIONS, 1);
+            }
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        String ipAddress = Utils.getIPAddress(true);
+        if (ipAddress == null || ipAddress.equals("")) {
+            finish();
+            return;
+        }
+        Toast.makeText(getApplicationContext(), "IP: " + ipAddress, Toast.LENGTH_LONG).show();
+        checkFeaturesAndPermissions();
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
                 .permitAll().build();
@@ -62,26 +144,12 @@ public class MainActivity extends Activity implements SensorEventListener {
         });
 
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        if (sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD) != null){
-            magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-            Log.d("magnetometer", "magnetometer available in this Android device");
-        }
-        else {
-            Log.d("magnetometer", "no magnetometer in this Android device");
-        }
         if (sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE) != null){
             gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
             Log.d("gyro", "gyroscope available in this Android device");
         }
         else {
             Log.d("gyro", "no gyroscope in this Android device");
-        }
-        if (sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null){
-            accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-            Log.d("accel", "accelerometer available in this Android device");
-        }
-        else {
-            Log.d("accel", "no accelerometer in this Android device");
         }
 
         synchroDetector = new SynchroDetector(true);
@@ -101,10 +169,11 @@ public class MainActivity extends Activity implements SensorEventListener {
 				corrCounter = Integer.valueOf(resultSplit[2]);
 				direction = resultSplit[3];
 				Log.d("scrollsyncmain", "oneventrecognized " + result);
+                writeData.add("" + timeRecognized + "," + result);
 				boolean inSync = corrValue >= 0.8;
 				if (inSync) {
 				    long syncTime = System.currentTimeMillis();
-				    if (syncTime - lastSync > 2000) {
+				    if (syncTime - lastSync > 1000) {
        				    Log.v("synced", "synced");
        				    runOnUiThread(new Runnable() {
                             @Override
@@ -112,30 +181,24 @@ public class MainActivity extends Activity implements SensorEventListener {
                                 Toast.makeText(getApplicationContext(), "sent", Toast.LENGTH_SHORT).show();
                             }
                         });
+       				    writeData.add("" + syncTime + ",sent");
                         try
                         {
-                            // Convert the arguments first, to ensure that they are valid
                             InetAddress host = InetAddress.getByName( "192.168.219.229" ) ;
-                            int port         = 5001 ;
-
+                            int port = 5001 ;
                             // Construct the socket
                             if (socket == null) {
                                 socket = new DatagramSocket();
                             }
-
                             // Construct the datagram packet
                             byte [] data = "accept".getBytes() ;
                             DatagramPacket packet = new DatagramPacket( data, data.length, host, port ) ;
                             socket.send( packet ) ;
-//                            socket.setSoTimeout( 2000 ) ;
                             packet.setData( new byte[PACKETSIZE] ) ;
-//                            socket.receive( packet ) ;
-//                            System.out.println( new String(packet.getData()) ) ;
-
                         }
-                        catch( Exception e )
+                        catch(Exception e)
                         {
-                            System.out.println( e ) ;
+                            System.out.println(e) ;
                         }
        				    lastSync = syncTime;
                     }
@@ -143,7 +206,8 @@ public class MainActivity extends Activity implements SensorEventListener {
             }
         });
 
-        new Thread(synchroDetector).start();
+        synchroThread = new Thread(synchroDetector);
+        synchroThread.start();
         buttonController.addTimer(new Runnable() {
             @Override
             public void run() {
@@ -159,31 +223,20 @@ public class MainActivity extends Activity implements SensorEventListener {
 				if (synchroDetector != null) {
                     synchroDetector.dataBuffer.offer(new Tuple2(null, new double[]{1, lastConvertedTS}));
                 }
-//                boolean inSync = meanTapDetector.detect(new Tuple2<>(new NVector(leftMagVal), new NVector(rightMagVal)));
-//                boolean inSync = meanTapDetector.detect(new Tuple2<>(new NVector(leftGyroVal), new NVector(rightGyroVal)));
-//                orbitsView.setInSYnc(inSync);
-//
-//                final ScrollView scrollView = (ScrollView)findViewById(R.id.scrollview);
-//                if(inSync && orbitsView.getSyncDirection().equals("right"))
-//                {
-//                    scrollView.post(new Runnable() {
-//                        public void run() {
-//                            scrollView.smoothScrollBy(30,30);
-//                        }
-//                    });
-//                }
-//                else
-//                if(inSync && orbitsView.getSyncDirection().equals("left"))
-//                {
-//                    scrollView.post(new Runnable() {
-//                        public void run() {
-//                            scrollView.smoothScrollBy(-30,-30);
-//                        }
-//                    });
-//                }
-
             }
         }, FLASH_LENGTH/2);
+        saveHandler.postDelayed(saveOutputRunnable, SAVE_INTERVAL);
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+        Date today = Calendar.getInstance().getTime();
+        String reportDate = df.format(today);
+        baseDir = "/sdcard/Synchro/" + reportDate + "/";
+        saveDir = new File(baseDir);
+        if (!saveDir.exists()) {
+            saveDir.mkdirs();
+        }
+        Log.v("onCreate", "" + saveDir.exists());
+        writeData.add("" + System.currentTimeMillis() + ",start");
+
     }
 
 	@Override
@@ -202,9 +255,7 @@ public class MainActivity extends Activity implements SensorEventListener {
                 sensorValuesDouble[i] = sensorValuesCopy[i];
             }
             synchroDetector.dataBuffer.offer(new Tuple2<>(new double[] {convertTimestamp}, sensorValuesDouble));
-        } else if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
         }
-
     }
 
 
@@ -216,8 +267,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_FASTEST);
-		sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+		saveOutput = true;
 		sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_FASTEST);
 	}
 
@@ -225,7 +275,15 @@ public class MainActivity extends Activity implements SensorEventListener {
 	protected void onPause() {
 		super.onPause();
 		sensorManager.unregisterListener(this);
-		if (socket != null) {
+	}
+
+	@Override
+    protected void onDestroy() {
+        super.onDestroy();
+        saveOutput = false;
+        synchroDetector.isRunning = false;
+        synchroThread.interrupt();
+        if (socket != null) {
 		    if (socket.isConnected()) {
 		        socket.disconnect();
             }
@@ -234,5 +292,5 @@ public class MainActivity extends Activity implements SensorEventListener {
             }
             socket = null;
         }
-	}
+    }
 }

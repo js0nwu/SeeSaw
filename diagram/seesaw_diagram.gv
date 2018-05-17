@@ -1,0 +1,12 @@
+digraph {
+node [shape=box]
+"UI" -> "Sync Detector" [label="Stimulus"];
+"Sensor" -> "Preprocessing" [label="Raw Data"];
+"Preprocessing" -> "Sync Detector" [label="Subsampled Feature"];
+"Sync Detector" -> "Lag Adjustment" [label="w/ Stimulus"];
+"Sync Detector" -> "Autocorrelation" [label="w/o Stimulus"];
+"Lag Adjustment" -> "Correlation" [label="Adjusted Signal"];
+"Correlation" -> "Output Processing";
+"Autocorrelation" -> "Output Processing";
+"Output Processing" -> "UI" [label="Feedback"];
+}

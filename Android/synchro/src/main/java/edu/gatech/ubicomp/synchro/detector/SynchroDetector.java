@@ -388,32 +388,14 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 		} else {
 			// Feature using the average vector sweep and recalculated right/left vectors
 			Vector deltaVector = leftVector.subtract(rightVector);
-//		System.out.println("dv: " + deltaVector.getNorm() + " mv: " + meanVector.getNorm());
-//        vectorLength = deltaVector.getNorm();
-//		double leftMost = leftVector.subtract(meanVector).dotProduct(meanVector) / meanVector.getNorm();
-//		double rightMost = rightVector.subtract(meanVector).dotProduct(meanVector) / meanVector.getNorm();
 			double leftMost = scalarProject(meanVector, leftVector.subtract(meanVector));
 			double rightMost = scalarProject(meanVector, rightVector.subtract(meanVector));
-//		System.out.println("lm: " + leftMost + " rm: " + rightMost);
 			vectorLength = Math.abs(leftMost - rightMost);
-//        System.out.println("vl: " + vectorLength);
 			Vector currentDeltaVector = null;
 			currentDeltaVector = currentVector.subtract(meanVector);
-//        currentDeltaVector = currentVector;
-//		double scalarProjection = currentDeltaVector.dotProduct(meanVector) / meanVector.getNorm();
 			double scalarProjection = scalarProject(meanVector, currentDeltaVector);
-//		System.out.println("" + deltaVector + "," + currentDeltaVector + "," + scalarProjection);
-//		  double scalarProjection = currentDeltaVector.dotProduct(deltaVector);
-//        double scalarProjection = currentDeltaVector.dotProduct(meanVector);
-//		System.out.println("dv " + deltaVector + " cdv " + currentDeltaVector + " sp " + scalarProjection);
-//        System.out.println("dv " + deltaVector + " mv " + meanVector);
-
-
 			return scalarProjection;
 
-//        return currentVector.dotProduct(deltaVector);
-//        return currentDeltaVector.getNorm();
-//        return currentDeltaVector.dotProduct(deltaVector);
 		}
 	}
 
@@ -496,10 +478,16 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 			int startIndex = crossCorrelation.length / 2 - limit + 1;
 			int maxIndex = startIndex;
 			int minIndex = startIndex;
+			if (startIndex < 0) {
+				startIndex = 0;
+			}
 			double maxValue = crossCorrelation[startIndex];
 			double minValue = crossCorrelation[startIndex];
 			for (int i = 0; i < limit * 2 - 1; i++) {
 				int corrIndex = startIndex + i;
+				if (corrIndex >= crossCorrelation.length) {
+					corrIndex = crossCorrelation.length - 1;
+				}
 //				System.out.println("corrIndex: " + corrIndex);
 				double currentValue = Math.abs(crossCorrelation[corrIndex]);
 				if (currentValue > maxValue) {
@@ -590,6 +578,9 @@ public class SynchroDetector extends Detector<Tuple2<double[]>> implements Runna
 	}
 
 	private double pmcc(double[] xArray, double[] yArray) {
+		if (xArray.length < 2 || yArray.length < 2) {
+			return 0;
+		}
 		PearsonsCorrelation pearsonsCorrelation = new PearsonsCorrelation();
 		double correlationCoefficient = pearsonsCorrelation.correlation(xArray, yArray);
 		return correlationCoefficient;
