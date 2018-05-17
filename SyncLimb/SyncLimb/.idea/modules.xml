@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/SyncLimb.iml" filepath="$PROJECT_DIR$/SyncLimb.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/phone/phone.iml" filepath="$PROJECT_DIR$/phone/phone.iml" />
+      <module fileurl="file://$PROJECT_DIR$/synclib/synclib.iml" filepath="$PROJECT_DIR$/synclib/synclib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/synclimbglass/synclimbglass.iml" filepath="$PROJECT_DIR$/synclimbglass/synclimbglass.iml" />
+    </modules>
+  </component>
+</project>
